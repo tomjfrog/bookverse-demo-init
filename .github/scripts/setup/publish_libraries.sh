@@ -11,7 +11,7 @@ echo "🔧 Project: $PROJECT_KEY"
 echo "🔧 JFrog URL: $JFROG_URL"
 echo ""
 
-INFRA_REPO_OWNER="${GITHUB_REPOSITORY_OWNER:-yonatanp-jfrog}"
+INFRA_REPO_OWNER="${GH_REPOSITORY_OWNER}"
 INFRA_REPO_NAME="bookverse-infra"
 
 echo "🔍 Checking bookverse-infra repository..."
