@@ -94,11 +94,11 @@ jobs:
         uses: actions/checkout@v4
         # Provides access to all setup scripts and configuration files
 
-      # 🔧 JFrog CLI Setup: Configure JFrog CLI with AppTrust integration support
+      # 🔧 JFrog CLI Setup: Configure JFrog CLI
       - name: Setup JFrog CLI
-        uses: EyalDelarea/setup-jfrog-cli@swampUpAppTrust
+        uses: jfrog/setup-jfrog-cli@v4
         with:
-          version: latest  # Latest JFrog CLI with AppTrust features
+          version: latest
 
       # ✅ Configuration Validation: Verify required environment variables are configured
       - name: "Preflight: require JFROG_URL"
