@@ -280,18 +280,18 @@ github_repos_ok=0
 
 for service in "${expected_repos[@]}"; do
     repo_name="bookverse-${service}"
-    if gh repo view "yonatanp-jfrog/${repo_name}" >/dev/null 2>&1; then
+    if gh repo view "${GH_REPOSITORY_OWNER}/${repo_name}" >/dev/null 2>&1; then
         echo "✅ Repository ${repo_name} exists"
         ((github_repos_ok++))
         
-        if gh api "repos/yonatanp-jfrog/${repo_name}/contents/.github/workflows" >/dev/null 2>&1; then
+        if gh api "repos/${GH_REPOSITORY_OWNER}/${repo_name}/contents/.github/workflows" >/dev/null 2>&1; then
             echo "   ✅ Workflows directory exists"
         else
             echo "   ⚠️  No workflows directory found"
         fi
         
         if [[ "$service" != "demo-assets" && "$service" != "helm" ]]; then
-            if gh variable list -R "yonatanp-jfrog/${repo_name}" | grep -q "PROJECT_KEY"; then
+            if gh variable list -R "${GH_REPOSITORY_OWNER}/${repo_name}" | grep -q "PROJECT_KEY"; then
                 echo "   ✅ Repository variables configured"
             else
                 echo "   ⚠️  Repository variables missing"
