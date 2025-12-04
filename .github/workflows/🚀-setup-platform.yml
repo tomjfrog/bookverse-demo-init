@@ -82,6 +82,7 @@ env:
   JFROG_URL: ${{ vars.JFROG_URL }}                    # JFrog Platform URL (repository variable)
   JFROG_ADMIN_TOKEN: ${{ secrets.JFROG_ADMIN_TOKEN }} # JFrog admin token (secret)
   GH_TOKEN: ${{ secrets.GH_TOKEN }}                   # GitHub token for repository management (secret)
+  GH_REPOSITORY_OWNER: ${{ vars.GH_REPOSITORY_OWNER }} # GitHub repository owner/organization (repository variable, required)
 
 jobs:
   setup-platform:
@@ -106,6 +107,15 @@ jobs:
           # Validate that essential JFrog Platform URL is configured
           if [[ -z "${{ env.JFROG_URL }}" ]]; then
             echo "❌ Missing vars.JFROG_URL. Set repository variable JFROG_URL before running." >&2
+            exit 1
+          fi
+          # This prevents workflow execution with incomplete configuration
+
+      - name: "Preflight: require GH_REPOSITORY_OWNER"
+        run: |
+          # Validate that GitHub repository owner/organization is configured
+          if [[ -z "${{ env.GH_REPOSITORY_OWNER }}" ]]; then
+            echo "❌ Missing vars.GH_REPOSITORY_OWNER. Set repository variable GH_REPOSITORY_OWNER before running." >&2
             exit 1
           fi
           # This prevents workflow execution with incomplete configuration

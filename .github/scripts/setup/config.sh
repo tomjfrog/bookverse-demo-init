@@ -96,6 +96,13 @@
 # the BookVerse platform for consistent naming and branding across all systems
 export PROJECT_KEY="bookverse"           # Primary project identifier for all platform operations
 export PROJECT_DISPLAY_NAME="BookVerse"  # Human-readable project name for UI and documentation
+# GH_REPOSITORY_OWNER is required and must be provided via environment variable
+if [[ -z "${GH_REPOSITORY_OWNER:-}" ]]; then
+  echo "❌ GH_REPOSITORY_OWNER is required (no default provided)" >&2
+  echo "   Please set GH_REPOSITORY_OWNER environment variable with your GitHub organization/owner" >&2
+  exit 2
+fi
+export GH_REPOSITORY_OWNER  # GitHub repository owner/organization (required)
 
 # 🔗 JFrog Platform Integration Configuration
 # Critical configuration for JFrog Platform connectivity and authentication
