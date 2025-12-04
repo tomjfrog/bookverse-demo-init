@@ -111,13 +111,17 @@ KEY_ALIAS="${EVIDENCE_KEY_ALIAS:-$ALIAS_DEFAULT}"
 
 # 📦 BookVerse Service Repository Configuration
 # Complete list of all BookVerse service repositories requiring evidence keys
+if [[ -z "${GH_REPOSITORY_OWNER:-}" ]]; then
+  echo "❌ GH_REPOSITORY_OWNER is required" >&2
+  exit 1
+fi
 SERVICE_REPOS=(
-  "yonatanp-jfrog/bookverse-inventory"      # Core business inventory and stock management
-  "yonatanp-jfrog/bookverse-recommendations" # AI-powered personalization engine
-  "yonatanp-jfrog/bookverse-checkout"      # Secure payment processing and transactions
-  "yonatanp-jfrog/bookverse-platform"      # Unified platform coordination and API gateway
-  "yonatanp-jfrog/bookverse-web"          # Customer-facing frontend and static assets
-  "yonatanp-jfrog/bookverse-helm"         # Kubernetes deployment and infrastructure
+  "${GH_REPOSITORY_OWNER}/bookverse-inventory"      # Core business inventory and stock management
+  "${GH_REPOSITORY_OWNER}/bookverse-recommendations" # AI-powered personalization engine
+  "${GH_REPOSITORY_OWNER}/bookverse-checkout"      # Secure payment processing and transactions
+  "${GH_REPOSITORY_OWNER}/bookverse-platform"      # Unified platform coordination and API gateway
+  "${GH_REPOSITORY_OWNER}/bookverse-web"          # Customer-facing frontend and static assets
+  "${GH_REPOSITORY_OWNER}/bookverse-helm"         # Kubernetes deployment and infrastructure
 )
 
 echo "🔐 Evidence Keys Setup"
