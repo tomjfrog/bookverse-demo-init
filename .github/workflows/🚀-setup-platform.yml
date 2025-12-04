@@ -74,8 +74,12 @@ concurrency:
 # 🎯 Trigger Configuration: Manual workflow dispatch for controlled platform setup
 on:
   workflow_dispatch:
-    # Manual trigger only - no additional inputs required
-    # All configuration handled through repository variables and secrets
+    inputs:
+      prepopulate_dependencies:
+        description: 'Pre-populate dependency caches for faster builds'
+        required: false
+        type: boolean
+        default: true
 
 # 🔧 Environment Configuration: Core platform access and authentication
 env:
@@ -169,8 +173,10 @@ jobs:
 
       # ⚡ Performance Optimization: Pre-populate dependency caches for faster builds
       - name: Pre-populate Dependencies Cache
+        if: ${{ inputs.prepopulate_dependencies }}
         run: |
           # Cache common dependencies to improve build performance and reliability
+          # Controlled by workflow input 'prepopulate_dependencies' (defaults to true)
           ./.github/scripts/setup/prepopulate_dependencies.sh
 
       # 🛡️ Access Control: Create custom roles with appropriate permissions for platform operations
