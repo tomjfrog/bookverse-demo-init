@@ -82,6 +82,7 @@ env:
   JFROG_URL: ${{ vars.JFROG_URL }}                    # JFrog Platform URL (repository variable)
   JFROG_ADMIN_TOKEN: ${{ secrets.JFROG_ADMIN_TOKEN }} # JFrog admin token (secret)
   GH_TOKEN: ${{ secrets.GH_TOKEN }}                   # GitHub token for repository management (secret)
+  GH_REPOSITORY_OWNER: ${{ vars.GH_REPOSITORY_OWNER }} # GitHub repository owner/organization (repository variable, required)
 
 jobs:
   setup-platform:
