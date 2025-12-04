@@ -104,6 +104,8 @@
 
 set -euo pipefail
 
+source "$(dirname "$0")/config.sh"
+
 # 🔐 BookVerse Evidence Key Configuration
 # Cryptographic key management and evidence collection configuration
 ALIAS_DEFAULT="BookVerse-Evidence-Key"
@@ -111,10 +113,7 @@ KEY_ALIAS="${EVIDENCE_KEY_ALIAS:-$ALIAS_DEFAULT}"
 
 # 📦 BookVerse Service Repository Configuration
 # Complete list of all BookVerse service repositories requiring evidence keys
-if [[ -z "${GH_REPOSITORY_OWNER:-}" ]]; then
-  echo "❌ GH_REPOSITORY_OWNER is required" >&2
-  exit 1
-fi
+# GH_REPOSITORY_OWNER is validated by config.sh
 SERVICE_REPOS=(
   "${GH_REPOSITORY_OWNER}/bookverse-inventory"      # Core business inventory and stock management
   "${GH_REPOSITORY_OWNER}/bookverse-recommendations" # AI-powered personalization engine
