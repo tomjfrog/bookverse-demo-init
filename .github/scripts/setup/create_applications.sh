@@ -386,7 +386,7 @@ echo ""
 update_repo_jfrog_config() {
     local app_key="$1"
     local repo_name="$app_key"
-    local owner="${GITHUB_REPOSITORY_OWNER:-yonatanp-jfrog}"
+    local owner="${GH_REPOSITORY_OWNER}"
 
     if ! command -v gh >/dev/null 2>&1; then
         echo "⚠️  GitHub CLI (gh) not found; skipping .jfrog/config.yml update for $owner/$repo_name"
