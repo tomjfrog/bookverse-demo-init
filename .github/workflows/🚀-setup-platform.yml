@@ -111,6 +111,15 @@ jobs:
           fi
           # This prevents workflow execution with incomplete configuration
 
+      - name: "Preflight: require GH_REPOSITORY_OWNER"
+        run: |
+          # Validate that GitHub repository owner/organization is configured
+          if [[ -z "${{ env.GH_REPOSITORY_OWNER }}" ]]; then
+            echo "❌ Missing vars.GH_REPOSITORY_OWNER. Set repository variable GH_REPOSITORY_OWNER before running." >&2
+            exit 1
+          fi
+          # This prevents workflow execution with incomplete configuration
+
       # 🔐 JFrog Platform Authentication: Establish authenticated connection to JFrog Platform
       - name: Initialize JFrog Platform
         run: |
