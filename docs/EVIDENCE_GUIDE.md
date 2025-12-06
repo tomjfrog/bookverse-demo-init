@@ -551,10 +551,12 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Setup JFrog CLI
-        uses: jfrog/setup-jfrog-cli@v3
+        uses: jfrog/setup-jfrog-cli@v4
+        with:
+          version: latest
         env:
           JF_URL: ${{ vars.JFROG_URL }}
-          JF_ACCESS_TOKEN: ${{ secrets.JFROG_ACCESS_TOKEN }}
+          JF_PROJECT: ${{ vars.PROJECT_KEY }}
       
       - name: Build and Test
         run: |
