@@ -590,9 +590,10 @@ CI/CD workflows require these environment variables:
 
 **Required:**
 - `JFROG_URL`: JFrog platform URL
-- `JFROG_ACCESS_TOKEN`: Access token for JFrog APIs
 - `EVIDENCE_PRIVATE_KEY`: Private key for evidence signing
 - `EVIDENCE_KEY_ALIAS`: Key alias in JFrog platform
+
+**Note:** Authentication uses OIDC (OpenID Connect) via GitHub Actions. No access token secret is required.
 
 **Optional:**
 - `SERVICE_NAME`: Service name (defaults to repo name)
