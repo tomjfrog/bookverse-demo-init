@@ -298,11 +298,6 @@ update_repository_secrets_and_variables() {
         log_warning "  → Failed to update JFROG_ADMIN_TOKEN: ${output}"
         repo_ok=0
     fi
-
-    if ! output=$(gh secret set JFROG_ACCESS_TOKEN --repo "$full_repo" --body "$NEW_JFROG_ADMIN_TOKEN" 2>&1); then
-        log_warning "  → Failed to update JFROG_ACCESS_TOKEN: ${output}"
-        repo_ok=0
-    fi
     if [[ $was_xtrace -eq 1 ]]; then set -x; fi
 
     log_info "  → Updating variables..."

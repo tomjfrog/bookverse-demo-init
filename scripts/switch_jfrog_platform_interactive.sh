@@ -275,7 +275,6 @@ update_repository() {
     local success=true
     
     echo "$admin_token" | gh secret set JFROG_ADMIN_TOKEN --repo "$full_repo" 2>/dev/null || true
-    echo "$admin_token" | gh secret set JFROG_ACCESS_TOKEN --repo "$full_repo" 2>/dev/null || true
     
     if ! gh variable set JFROG_URL --body "$jpd_host" --repo "$full_repo" 2>/dev/null; then
         log_warning "  → Could not update JFROG_URL variable"
