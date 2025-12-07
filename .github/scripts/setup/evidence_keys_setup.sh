@@ -108,7 +108,7 @@ source "$(dirname "$0")/config.sh"
 
 # 🔐 BookVerse Evidence Key Configuration
 # Cryptographic key management and evidence collection configuration
-ALIAS_DEFAULT="BookVerse-Evidence-Key"
+ALIAS_DEFAULT="bookverse-signing-key"
 KEY_ALIAS="${EVIDENCE_KEY_ALIAS:-$ALIAS_DEFAULT}"
 
 # 📦 BookVerse Service Repository Configuration
