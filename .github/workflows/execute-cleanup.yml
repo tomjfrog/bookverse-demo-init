@@ -24,6 +24,9 @@ on:
 permissions:
   contents: write
 
+env:
+  GH_REPOSITORY_OWNER: ${{ vars.GH_REPOSITORY_OWNER }}
+
 jobs:
   cleanup:
     runs-on: ubuntu-latest
@@ -153,7 +156,6 @@ jobs:
           JFROG_URL: ${{ vars.JFROG_URL }}
           JFROG_ADMIN_TOKEN: ${{ secrets.JFROG_ADMIN_TOKEN }}
           PROJECT_KEY: 'bookverse'
-          GH_REPOSITORY_OWNER: ${{ vars.GH_REPOSITORY_OWNER }}
         run: |
           set -euo pipefail
           # Delete application versions first (highest level dependencies)
