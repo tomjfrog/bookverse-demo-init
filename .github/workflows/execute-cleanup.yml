@@ -34,7 +34,7 @@ jobs:
 
 
       - name: Setup JFrog CLI
-        uses: EyalDelarea/setup-jfrog-cli@swampUpAppTrust
+        uses: jfrog/setup-jfrog-cli@v5
         with:
           version: latest
 
@@ -153,6 +153,7 @@ jobs:
           JFROG_URL: ${{ vars.JFROG_URL }}
           JFROG_ADMIN_TOKEN: ${{ secrets.JFROG_ADMIN_TOKEN }}
           PROJECT_KEY: 'bookverse'
+          GH_REPOSITORY_OWNER: ${{ vars.GH_REPOSITORY_OWNER }}
         run: |
           set -euo pipefail
           # Delete application versions first (highest level dependencies)
