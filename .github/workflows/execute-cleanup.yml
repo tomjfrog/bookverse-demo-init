@@ -37,7 +37,7 @@ jobs:
 
 
       - name: Setup JFrog CLI
-        uses: jfrog/setup-jfrog-cli@v5
+        uses: jfrog/setup-jfrog-cli@v4
         with:
           version: latest
 
