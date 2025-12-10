@@ -374,7 +374,7 @@ jobs:
             echo "- Smart conflict resolution implemented" >> $GITHUB_STEP_SUMMARY
             echo "- Keys distributed to all service repositories" >> $GITHUB_STEP_SUMMARY
             echo "- Public key uploaded to JFrog Platform as trusted key" >> $GITHUB_STEP_SUMMARY
-            key_alias=${EVIDENCE_KEY_ALIAS:-BookVerse-Evidence-Key}
+            key_alias=${EVIDENCE_KEY_ALIAS:-bookverse-evidence-key}
             echo "- Key alias: \`$key_alias\`" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "1. 🏗️ **Run service CI/CD workflows** to build and deploy applications" >> $GITHUB_STEP_SUMMARY

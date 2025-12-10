@@ -270,6 +270,23 @@ BookVerse supports three cryptographic algorithms for evidence signing:
 
 #### Option 2: Manual Key Generation
 
+**Using JFrog CLI (Recommended):**
+
+The recommended approach is to use JFrog CLI's built-in key generation command, which creates keys optimized for JFrog evidence workflows:
+
+```bash
+# Generate key pair using JFrog CLI
+jf evd generate-key-pair --alias "bookverse-evidence-key" --output-dir ./keys
+
+# This generates:
+# - keys/bookverse-evidence-key.key (private key)
+# - keys/bookverse-evidence-key.pub (public key)
+```
+
+**Using OpenSSL (Alternative):**
+
+If you prefer to use OpenSSL directly, you can generate keys manually:
+
 **ED25519 Keys (Recommended):**
 ```bash
 # Generate private key
@@ -303,11 +320,15 @@ openssl ec -in private.pem -pubout -out public.pem
 
 The `update_evidence_keys.sh` script automatically:
 
-1. **Generates key pair** (if requested)
+1. **Generates key pair using JFrog CLI** (if requested with `--generate`)
+   - Uses `jf evd generate-key-pair` for optimal JFrog integration
+   - Creates keys in the format required for JFrog evidence workflows
 2. **Updates GitHub repository secrets/variables** for all BookVerse repositories
 3. **Uploads public key to JFrog Platform** for verification
 4. **Displays generated keys** for secure storage
 5. **Cleans up temporary files**
+
+**Note**: The script uses JFrog CLI for key generation by default. If you have existing keys generated with OpenSSL or other tools, you can still use them with the `--private-key` and `--public-key` options.
 
 #### Repository Configuration
 

@@ -36,6 +36,143 @@ BookVerse implements **comprehensive unified policies** that demonstrate enterpr
 
 ---
 
+## 🚀 Initial Setup: Fork Service Repositories
+
+Before you can deploy the BookVerse platform, you need to fork the service repositories from the upstream organization to your own GitHub organization or user account.
+
+### Why Fork?
+
+The BookVerse demo consists of multiple service repositories that need to be under your control to:
+- Configure repository secrets and variables
+- Set up CI/CD workflows with your JFrog Platform
+- Customize settings for your environment
+- Maintain your own codebase
+
+### Quick Fork Setup
+
+Use the automated forking script to fork all service repositories at once:
+
+```bash
+# Navigate to the bookverse-demo-init repository
+cd bookverse-demo-init
+
+# Authenticate with GitHub CLI (if not already done)
+gh auth login
+
+# Fork all repositories to your GitHub account/organization
+./scripts/create-clean-repos.sh --target-org YOUR_ORG --upstream-org yonatanp-jfrog --clone-local
+```
+
+**Script Options:**
+- `--target-org ORG`: Your GitHub organization or username (default: auto-detected from current repo)
+- `--upstream-org ORG`: Upstream organization to fork from (default: `yonatanp-jfrog`)
+- `--dry-run`: Preview what would be forked without making changes
+- `--clone-local`: Automatically clone forked repos locally after forking
+- `--help`: Show detailed usage information
+
+**Examples:**
+```bash
+# Fork to your personal GitHub account
+./scripts/create-clean-repos.sh --target-org yourusername --clone-local
+
+# Fork to an organization (dry run first to preview)
+./scripts/create-clean-repos.sh --target-org your-org --dry-run
+
+# Fork and clone locally in one step
+./scripts/create-clean-repos.sh --target-org your-org --upstream-org yonatanp-jfrog --clone-local
+```
+
+### What Gets Forked?
+
+The script forks these service repositories:
+- `bookverse-inventory` - Product catalog and inventory management
+- `bookverse-recommendations` - AI-powered recommendation engine
+- `bookverse-checkout` - Order processing and payment management
+- `bookverse-platform` - Platform coordination and API gateway
+- `bookverse-web` - Frontend web application
+- `bookverse-helm` - Kubernetes deployment charts
+
+### After Forking
+
+Once repositories are forked, you'll need to:
+1. **Configure Environment Variables**: Set up your JFrog Platform configuration using `environment.sh`
+2. **Generate Evidence Keys** (optional): Use `3_update_evidence_keys.sh` to generate new keys
+3. **Configure Repository Variables & Secrets**: Use the automated script to configure all service repositories
+4. **Set Up OIDC**: Configure OIDC providers for each service (automated via Setup Platform workflow)
+5. **Run Setup Platform**: Execute the Setup Platform workflow to provision your JFrog Platform environment
+
+#### Step 1: Configure Environment Variables
+
+Before configuring repository secrets and variables, you need to set up your environment configuration file:
+
+```bash
+# Copy the example template (first time only)
+cp environment.sh.example environment.sh
+
+# Edit environment.sh with your actual values
+# Required variables:
+#   - JFROG_URL: Your JFrog Platform URL (e.g., "https://your-instance.jfrog.io")
+#   - JFROG_ADMIN_TOKEN: JFrog Platform admin token (for key generation/upload)
+#   - EVIDENCE_KEY_ALIAS: Evidence key alias in JFrog Platform (e.g., "bookverse-evidence-key")
+#
+# Optional variables:
+#   - PROJECT_KEY: JFrog project key (defaults to "bookverse")
+#   - DOCKER_REGISTRY: Docker registry hostname (auto-derived from JFROG_URL if not set)
+#   - EVIDENCE_PRIVATE_KEY: Private key for evidence signing (only if using existing keys)
+#   - GH_REPO_DISPATCH_TOKEN: GitHub PAT for cross-repo workflows (optional)
+
+# Source the environment file to export all variables
+source environment.sh
+```
+
+**Example `environment.sh` configuration (initial setup):**
+```bash
+export JFROG_URL="https://your-instance.jfrog.io"
+export JFROG_ADMIN_TOKEN="your-jfrog-admin-token"
+export EVIDENCE_KEY_ALIAS="bookverse-evidence-key"
+export PROJECT_KEY="bookverse"
+# EVIDENCE_PRIVATE_KEY is not needed initially - will be generated in Step 2
+# export GH_REPO_DISPATCH_TOKEN="ghp_xxxxxxxxxxxx..."  # Optional
+```
+
+**Note**: `EVIDENCE_PRIVATE_KEY` is optional initially. If you're generating keys with `3_update_evidence_keys.sh`, you don't need to set it in `environment.sh` until after keys are generated.
+
+#### Step 2: Generate Evidence Keys (Optional)
+
+If you need to generate new evidence keys, use the key generation script:
+
+```bash
+# Make sure you've sourced environment.sh first
+source environment.sh
+
+# Generate new evidence keys and upload to JFrog Platform
+./scripts/3_update_evidence_keys.sh --generate --org "your-org"
+
+# After generation, save the private key shown in the output
+# You can then add it to environment.sh if needed for configure_service_secrets.sh
+```
+
+#### Step 3: Configure Repository Secrets and Variables
+
+Once your environment variables are set, use the automated configuration script to set up all service repositories:
+
+```bash
+# Make sure you've sourced environment.sh first
+source environment.sh
+
+# Run the configuration script with your GitHub organization
+.github/scripts/setup/configure_service_secrets.sh "your-org"
+```
+
+This script will automatically configure:
+- **Repository Variables**: `JFROG_URL`, `PROJECT_KEY`, `DOCKER_REGISTRY`, `EVIDENCE_KEY_ALIAS`
+- **Repository Secrets**: `EVIDENCE_PRIVATE_KEY`
+- **Optional Dispatch Token**: `GH_REPO_DISPATCH_TOKEN` (if provided, for cross-repo workflows)
+
+**📋 Next Steps**: Continue with the [Getting Started Guide](docs/GETTING_STARTED.md) for complete setup instructions.
+
+---
+
 ## 🎯 Where Do You Want to Start?
 
 Choose your path based on your needs:
