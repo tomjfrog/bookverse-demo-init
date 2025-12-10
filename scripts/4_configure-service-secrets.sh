@@ -13,16 +13,17 @@
 #
 # 🏗️ ARCHITECTURE:
 #     - Multi-Repository Management: Automated secret/variable configuration across service repos
-#     - Configuration Distribution: Secure propagation of JFrog and evidence configuration
+#     - Configuration Distribution: Secure propagation of JFrog Platform configuration
 #     - GitHub CLI Integration: Native GitHub CLI for secure secret and variable management
+#     - Evidence Key Separation: Evidence keys managed separately by 3_update_evidence_keys.sh
 #     - Validation Framework: Comprehensive verification of configuration success
 #     - Error Recovery: Robust error handling with detailed failure reporting
 #     - Batch Processing: Efficient bulk repository configuration with status tracking
 #
 # 🚀 KEY FEATURES:
-#     - Automated repository variables configuration (JFROG_URL, PROJECT_KEY, DOCKER_REGISTRY, EVIDENCE_KEY_ALIAS)
-#     - Automated repository secrets configuration (EVIDENCE_PRIVATE_KEY)
+#     - Automated repository variables configuration (JFROG_URL, PROJECT_KEY, DOCKER_REGISTRY)
 #     - Optional GitHub repository dispatch token configuration for platform orchestration
+#     - Note: Evidence keys are managed separately by 3_update_evidence_keys.sh
 #     - Comprehensive validation and verification of configuration success
 #     - Batch processing with individual repository status tracking and error isolation
 #     - Security-first approach with secure transmission
@@ -46,7 +47,7 @@
 #     [Required Positional Parameters]
 #     $1 - GH_ORG              : GitHub organization/owner name (e.g., "yonatanp-jfrog")
 #                                 - Used to construct repository paths
-#                                 - Default: "yonatanp-jfrog" if not provided
+#                                 - Required: must be provided as first argument
 #     
 #     [Required Environment Variables]
 #     JFROG_URL                : JFrog Platform URL (e.g., "https://your-instance.jfrog.io")
@@ -61,14 +62,8 @@
 #                                 - Can be derived from JFROG_URL if not provided
 #                                 - Used for Docker image push/pull operations
 #     
-#     EVIDENCE_KEY_ALIAS       : Evidence signing key alias in JFrog Platform
-#                                 - Required for cryptographic evidence signing
-#                                 - Example: "bookverse-evidence-key"
-#     
-#     EVIDENCE_PRIVATE_KEY     : Private key for evidence signing (PEM format)
-#                                 - Required for all repositories
-#                                 - Used for cryptographic evidence collection
-#                                 - Format: PEM-encoded private key
+#     Note: Evidence keys (EVIDENCE_KEY_ALIAS, EVIDENCE_PRIVATE_KEY, EVIDENCE_PUBLIC_KEY)
+#           are managed by 3_update_evidence_keys.sh, not this script
 #     
 #     [Optional Environment Variables]
 #     GH_REPO_DISPATCH_TOKEN   : GitHub repository dispatch token for cross-repo workflows
@@ -81,8 +76,6 @@
 # 🌍 ENVIRONMENT VARIABLES:
 #     [Required for Script Execution]
 #     JFROG_URL                : JFrog Platform URL
-#     EVIDENCE_KEY_ALIAS       : Evidence key alias
-#     EVIDENCE_PRIVATE_KEY     : Evidence signing private key (PEM format)
 #     
 #     [Optional Configuration]
 #     PROJECT_KEY              : Project key (defaults to "bookverse")
@@ -135,23 +128,19 @@
 # 💡 EXAMPLES:
 #     [Basic Configuration]
 #     export JFROG_URL="https://your-instance.jfrog.io"
-#     export EVIDENCE_KEY_ALIAS="bookverse-evidence-key"
-#     export EVIDENCE_PRIVATE_KEY="$(cat evidence-key.pem)"
-#     ./scripts/configure_service_secrets.sh "yonatanp-jfrog"
+#     ./scripts/4_configure-service-secrets.sh "your-org"
 #     
-#     [Configuration with Custom Organization]
+#     [Configuration with Custom Project Key]
 #     export JFROG_URL="https://your-instance.jfrog.io"
 #     export PROJECT_KEY="myproject"
-#     export EVIDENCE_KEY_ALIAS="myproject-evidence-key"
-#     export EVIDENCE_PRIVATE_KEY="$(cat evidence-key.pem)"
-#     ./scripts/configure_service_secrets.sh "my-org"
+#     ./scripts/4_configure-service-secrets.sh "my-org"
 #     
 #     [Advanced Configuration with Dispatch Token]
 #     export JFROG_URL="https://your-instance.jfrog.io"
-#     export EVIDENCE_KEY_ALIAS="bookverse-evidence-key"
-#     export EVIDENCE_PRIVATE_KEY="$(cat evidence-key.pem)"
 #     export GH_REPO_DISPATCH_TOKEN="ghp_xxxxxxxxxxxx..."
-#     ./scripts/configure_service_secrets.sh "yonatanp-jfrog"
+#     ./scripts/4_configure-service-secrets.sh "your-org"
+#     
+#     Note: Evidence keys should be configured separately using 3_update_evidence_keys.sh
 #
 # ⚠️ ERROR HANDLING:
 #     [Common Failure Modes]
@@ -187,7 +176,7 @@
 #     - JFrog Platform: OIDC authentication (no access token required)
 #     - Artifactory: Container registry access for CI/CD workflows
 #     - Build Info: CI/CD pipeline metadata and artifact management
-#     - Evidence Collection: Cryptographic evidence signing and verification
+#     - Evidence Collection: Managed separately by 3_update_evidence_keys.sh
 #
 # 📊 PERFORMANCE:
 #     [Execution Time]
@@ -222,21 +211,22 @@
 set -euo pipefail
 
 # 🔐 Parameter Extraction: Extract and validate GitHub organization parameter
-GH_ORG="${1:-yonatanp-jfrog}"
+if [ -z "${1:-}" ]; then
+    echo "❌ Error: GitHub organization parameter is required"
+    echo ""
+    echo "📖 Usage: $0 <GH_ORG>"
+    echo ""
+    echo "  GH_ORG: GitHub organization/owner name (e.g., 'yonatanp-jfrog' or 'your-org')"
+    echo ""
+    exit 1
+fi
+GH_ORG="${1}"
 
 # 📋 Parameter Validation: Comprehensive validation of required environment variables
 MISSING_VARS=()
 
 if [ -z "${JFROG_URL:-}" ]; then
     MISSING_VARS+=("JFROG_URL")
-fi
-
-if [ -z "${EVIDENCE_KEY_ALIAS:-}" ]; then
-    MISSING_VARS+=("EVIDENCE_KEY_ALIAS")
-fi
-
-if [ -z "${EVIDENCE_PRIVATE_KEY:-}" ]; then
-    MISSING_VARS+=("EVIDENCE_PRIVATE_KEY")
 fi
 
 if [ ${#MISSING_VARS[@]} -gt 0 ]; then
@@ -249,15 +239,8 @@ if [ ${#MISSING_VARS[@]} -gt 0 ]; then
     echo "                          - Required for all repositories"
     echo "                          - Used for OIDC authentication and artifact management"
     echo ""
-    echo "  EVIDENCE_KEY_ALIAS   : Evidence signing key alias in JFrog Platform"
-    echo "                          - Required for cryptographic evidence signing"
-    echo "                          - Example: 'bookverse-evidence-key'"
-    echo ""
-    echo "  EVIDENCE_PRIVATE_KEY : Private key for evidence signing (PEM format)"
-    echo "                          - Required for all repositories"
-    echo "                          - Used for cryptographic evidence collection"
-    echo "                          - Format: PEM-encoded private key"
-    echo "                          - Example: export EVIDENCE_PRIVATE_KEY=\"\$(cat evidence-key.pem)\""
+    echo "  Note: Evidence keys (EVIDENCE_KEY_ALIAS, EVIDENCE_PRIVATE_KEY, EVIDENCE_PUBLIC_KEY)"
+    echo "        are managed by 3_update_evidence_keys.sh, not this script"
     echo ""
     echo "🌍 Optional Environment Variables:"
     echo "  PROJECT_KEY          : JFrog project key (default: 'bookverse')"
@@ -274,30 +257,25 @@ if [ ${#MISSING_VARS[@]} -gt 0 ]; then
     echo "                          - Format: GitHub PAT (ghp_xxxxxxxxxxxx...)"
     echo ""
     echo "📋 Positional Parameters:"
-    echo "  GH_ORG               : GitHub organization/owner name (default: 'yonatanp-jfrog')"
+    echo "  GH_ORG               : GitHub organization/owner name (required)"
     echo "                          - Used to construct repository paths"
     echo "                          - Example: 'yonatanp-jfrog' or 'my-org'"
+    echo "                          - Must be provided as first argument"
     echo ""
     echo "💡 Example Usage:"
-    echo "  # Basic configuration with default organization"
+    echo "  # Basic configuration"
     echo "  export JFROG_URL='https://your-instance.jfrog.io'"
-    echo "  export EVIDENCE_KEY_ALIAS='bookverse-evidence-key'"
-    echo "  export EVIDENCE_PRIVATE_KEY=\"\$(cat evidence-key.pem)\""
-    echo "  ./scripts/configure_service_secrets.sh"
+    echo "  ./scripts/4_configure-service-secrets.sh 'your-org'"
     echo ""
-    echo "  # Configuration with custom organization"
+    echo "  # Configuration with custom project key"
     echo "  export JFROG_URL='https://your-instance.jfrog.io'"
     echo "  export PROJECT_KEY='myproject'"
-    echo "  export EVIDENCE_KEY_ALIAS='myproject-evidence-key'"
-    echo "  export EVIDENCE_PRIVATE_KEY=\"\$(cat evidence-key.pem)\""
-    echo "  ./scripts/configure_service_secrets.sh 'my-org'"
+    echo "  ./scripts/4_configure-service-secrets.sh 'my-org'"
     echo ""
     echo "  # Advanced configuration with dispatch token"
     echo "  export JFROG_URL='https://your-instance.jfrog.io'"
-    echo "  export EVIDENCE_KEY_ALIAS='bookverse-evidence-key'"
-    echo "  export EVIDENCE_PRIVATE_KEY=\"\$(cat evidence-key.pem)\""
     echo "  export GH_REPO_DISPATCH_TOKEN='ghp_xxxxxxxxxxxx...'"
-    echo "  ./scripts/configure_service_secrets.sh 'yonatanp-jfrog'"
+    echo "  ./scripts/4_configure-service-secrets.sh 'your-org'"
     echo ""
     echo "📋 Prerequisites:"
     echo "  - GitHub CLI installed and authenticated (gh auth login)"
@@ -324,7 +302,8 @@ echo "🔧 GitHub Organization: $GH_ORG"
 echo "🔧 JFrog URL: $JFROG_URL"
 echo "🔧 Project Key: $PROJECT_KEY"
 echo "🔧 Docker Registry: $DOCKER_REGISTRY"
-echo "🔧 Evidence Key Alias: $EVIDENCE_KEY_ALIAS"
+echo ""
+echo "ℹ️  Note: Evidence keys are managed separately by 3_update_evidence_keys.sh"
 echo ""
 
 # 📦 Repository Configuration: Define target repositories for configuration
@@ -364,7 +343,6 @@ else
     echo "ℹ️ GH_REPO_DISPATCH_TOKEN not provided; skipping dispatch token configuration"
     echo "   Impact: Basic CI/CD will work, advanced cross-repo features disabled"
     echo "   Note: This token is optional for basic platform functionality"
-    echo "   Note: Required secrets (EVIDENCE_PRIVATE_KEY) and variables will still be configured"
     echo ""
 fi
 
@@ -398,25 +376,11 @@ for repo_name in "${SERVICE_REPOS[@]}"; do
         REPO_SUCCESS=false
     fi
     
-    if ! gh variable set EVIDENCE_KEY_ALIAS --body "$EVIDENCE_KEY_ALIAS" --repo "$FULL_REPO" 2>/dev/null; then
-        echo "   ⚠️  Failed to set EVIDENCE_KEY_ALIAS variable"
-        REPO_SUCCESS=false
-    fi
-    
-    # 🔐 Repository Secrets Configuration
-    echo "   Setting repository secrets..."
-    
-    if ! echo -n "$EVIDENCE_PRIVATE_KEY" | gh secret set EVIDENCE_PRIVATE_KEY --repo "$FULL_REPO" 2>/dev/null; then
-        echo "   ⚠️  Failed to set EVIDENCE_PRIVATE_KEY secret"
-        REPO_SUCCESS=false
-    fi
-    
     # 📊 Status Reporting
     if [ "$REPO_SUCCESS" = true ]; then
         echo "✅ $FULL_REPO: Configuration completed successfully"
-        echo "   Variables: JFROG_URL, PROJECT_KEY, DOCKER_REGISTRY, EVIDENCE_KEY_ALIAS"
-        echo "   Secrets: EVIDENCE_PRIVATE_KEY"
-        echo "   Status: CI/CD workflows ready for execution"
+        echo "   Variables: JFROG_URL, PROJECT_KEY, DOCKER_REGISTRY"
+        echo "   Status: CI/CD workflows ready for execution (evidence keys managed separately)"
     else
         echo "❌ $FULL_REPO: Configuration completed with errors"
         echo "   Error: Some variables or secrets failed to configure"
@@ -447,11 +411,10 @@ for repo_name in "${SERVICE_REPOS[@]}"; do
         ((FAILURE_COUNT++))
     else
         echo "  ✅ $FULL_REPO"
-        echo "      - Variables: ✅ JFROG_URL, PROJECT_KEY, DOCKER_REGISTRY, EVIDENCE_KEY_ALIAS"
-        echo "      - Secrets: ✅ EVIDENCE_PRIVATE_KEY"
+        echo "      - Variables: ✅ JFROG_URL, PROJECT_KEY, DOCKER_REGISTRY"
         echo "      - CI/CD Authentication: ✅ Enabled (OIDC)"
         echo "      - Container Registry Access: ✅ Ready"
-        echo "      - Evidence Collection: ✅ Ready"
+        echo "      - Evidence Keys: ℹ️  Managed by 3_update_evidence_keys.sh"
         ((SUCCESS_COUNT++))
     fi
 done
@@ -505,7 +468,7 @@ echo "💡 Troubleshooting:"
 echo "  - If workflows fail: Check variable values and secret permissions"
 echo "  - For authentication errors: Verify OIDC provider is configured in JFrog Platform"
 echo "  - For repository access: Confirm variables are set correctly"
-echo "  - For evidence signing: Verify EVIDENCE_PRIVATE_KEY matches the key in JFrog Platform"
+echo "  - For evidence signing: Use 3_update_evidence_keys.sh to configure evidence keys"
 
 # 🚨 Exit with appropriate code based on overall success
 if [ "$OVERALL_SUCCESS" = false ]; then
