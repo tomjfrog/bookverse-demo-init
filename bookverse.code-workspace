@@ -1,6 +1,6 @@
 {
   "folders": [
-    { "path": "." },
+    { "path": ".", "name": "bookverse-demo-init" },
     { "path": "../bookverse-inventory" },
     { "path": "../bookverse-recommendations" },
     { "path": "../bookverse-checkout" },
@@ -53,7 +53,13 @@
     },
     "files.exclude": {
       "**/.github/workflows/*.yml": false
-    }
+    },
+    "editor.fontSize": 14,
+    "cursor.cmdk.useThemedDiffBackground2": false,
+    "workbench.colorTheme": "Monokai",
+    "git.autoRepositoryDetection": true,
+    "git.detectSubmodules": true,
+    "scm.repositories.visible": 10
   },
   "extensions": {
     "recommendations": [
