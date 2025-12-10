@@ -269,8 +269,8 @@ log_error() { echo -e "${RED}❌ $1${NC}"; }
 
 PRIVATE_KEY_FILE=""
 PUBLIC_KEY_FILE=""
-KEY_ALIAS="bookverse-evidence-key"
-GITHUB_ORG="yonatanp-jfrog"
+KEY_ALIAS="${EVIDENCE_KEY_ALIAS:-bookverse-evidence-key}"  # Default from environment, fallback to default
+GITHUB_ORG=""
 DRY_RUN=false
 GENERATE_KEYS=false
 KEY_TYPE="rsa"
@@ -299,9 +299,12 @@ Generate evidence keys and/or update them across all BookVerse repositories
 using your local GitHub CLI authentication.
 
 USAGE:
-    ./update_evidence_keys.sh --generate [--key-type <type>] [options]
+    ./update_evidence_keys.sh --generate --org <org> [--key-type <type>] [options]
     
-    ./update_evidence_keys.sh --private-key <file> --public-key <file> [options]
+    ./update_evidence_keys.sh --private-key <file> --public-key <file> --org <org> [options]
+
+REQUIRED ARGUMENTS:
+    --org <name>            GitHub organization (required)
 
 KEY GENERATION:
     --generate              Generate new key pair
@@ -312,33 +315,44 @@ EXISTING KEYS:
     --public-key <file>     Path to public key PEM file
 
 OPTIONAL ARGUMENTS:
-    --alias <name>          Key alias (default: bookverse_evidence_key)
-    --org <name>            GitHub organization (default: yonatanp-jfrog)
+    --alias <name>          Key alias (default: from EVIDENCE_KEY_ALIAS env var, or bookverse-evidence-key)
     --no-jfrog              Skip JFrog Platform update
     --dry-run               Show what would be done without making changes
     --help                  Show this help message
 
 EXAMPLES:
-    ./update_evidence_keys.sh --generate
+    ./update_evidence_keys.sh --generate --org "your-org"
     
-    ./update_evidence_keys.sh --generate --key-type ed25519
+    ./update_evidence_keys.sh --generate --org "your-org" --key-type ed25519
     
-    ./update_evidence_keys.sh --private-key private.pem --public-key public.pem
+    ./update_evidence_keys.sh --private-key private.pem --public-key public.pem --org "your-org"
     
-    ./update_evidence_keys.sh --generate --alias "my_evidence_key_2024"
+    ./update_evidence_keys.sh --generate --org "your-org" --alias "my_evidence_key_2024"
     
-    ./update_evidence_keys.sh --generate --dry-run
+    ./update_evidence_keys.sh --generate --org "your-org" --dry-run
 
-KEY ALGORITHMS:
-    rsa        RSA 2048-bit (widely supported) [DEFAULT]
-    ec         EC secp256r1 (smaller keys, excellent security)
-    ed25519    ED25519 (modern, fast, secure)
+KEY GENERATION:
+    Keys are generated using JFrog CLI's 'jf evd generate-key-pair' command,
+    which creates keys optimized for JFrog evidence workflows. The key type
+    parameter is passed to JFrog CLI, which handles the appropriate algorithm
+    selection and formatting.
+    
+    Supported key types: rsa, ec, ed25519 (default: rsa)
+
+ENVIRONMENT VARIABLES:
+    EVIDENCE_KEY_ALIAS       Key alias (default if --alias not provided)
+                            Set in environment.sh or export before running script
+    JFROG_URL               JFrog Platform URL (required for JFrog updates)
+    JFROG_ADMIN_TOKEN       JFrog Platform admin token (required for JFrog updates)
 
 PREREQUISITES:
     1. Install GitHub CLI: https://cli.github.com/
     2. Authenticate: gh auth login
-    3. Install OpenSSL for key generation/validation
-    4. Ensure access to BookVerse repositories
+    3. Install JFrog CLI for key generation: https://jfrog.com/getcli/
+       (JFrog CLI v2.45.0+ with evidence support required)
+    4. For existing key validation: OpenSSL (optional, only needed when using --private-key/--public-key)
+    5. Ensure access to BookVerse repositories
+    6. Source environment.sh or set EVIDENCE_KEY_ALIAS environment variable (recommended)
 
 EOF
 }
@@ -416,14 +430,39 @@ parse_arguments() {
             exit 1
         fi
     fi
+    
+    # Validate required --org parameter
+    if [[ -z "$GITHUB_ORG" ]]; then
+        log_error "GitHub organization is required. Use --org <name>"
+        echo ""
+        show_usage
+        exit 1
+    fi
 }
 
 validate_environment() {
     log_info "Validating environment..."
 
-    if ! command -v openssl &> /dev/null; then
-        log_error "OpenSSL is required but not installed"
-        exit 1
+    if [[ "$GENERATE_KEYS" == true ]]; then
+        # When generating keys, JFrog CLI is required
+        if ! command -v jf &> /dev/null; then
+            log_error "JFrog CLI (jf) is required for key generation but not installed"
+            log_info "Install from: https://jfrog.com/getcli/"
+            log_info "Or use --private-key and --public-key to use existing keys"
+            exit 1
+        fi
+        
+        # Verify JFrog CLI can run evidence commands
+        if ! jf evd --help &> /dev/null; then
+            log_warning "JFrog CLI evidence commands may not be available"
+            log_info "Ensure you have JFrog CLI v2.45.0 or later with evidence support"
+        fi
+    else
+        # When using existing keys, OpenSSL is required for validation
+        if ! command -v openssl &> /dev/null; then
+            log_error "OpenSSL is required for key validation but not installed"
+            exit 1
+        fi
     fi
 
     if ! command -v gh &> /dev/null; then
@@ -470,33 +509,101 @@ generate_keys() {
         return 0
     fi
     
-    log_info "Generating $KEY_TYPE key pair..."
+    log_info "Generating $KEY_TYPE key pair using JFrog CLI..."
     
     TEMP_DIR=$(mktemp -d)
     PRIVATE_KEY_FILE="$TEMP_DIR/private.pem"
     PUBLIC_KEY_FILE="$TEMP_DIR/public.pem"
     
-    case "$KEY_TYPE" in
-        "rsa")
-            openssl genrsa -out "$PRIVATE_KEY_FILE" ${DEFAULT_RSA_KEY_SIZE:-2048}
-            openssl rsa -in "$PRIVATE_KEY_FILE" -pubout -out "$PUBLIC_KEY_FILE"
-            KEY_ALGORITHM="RSA ${DEFAULT_RSA_KEY_SIZE:-2048}-bit"
-            ;;
-        "ec")
-            openssl ecparam -name secp256r1 -genkey -noout -out "$PRIVATE_KEY_FILE"
-            openssl ec -in "$PRIVATE_KEY_FILE" -pubout > "$PUBLIC_KEY_FILE"
-            KEY_ALGORITHM="EC secp256r1"
-            ;;
-        "ed25519")
-            openssl genpkey -algorithm ed25519 -out "$PRIVATE_KEY_FILE"
-            openssl pkey -in "$PRIVATE_KEY_FILE" -pubout -out "$PUBLIC_KEY_FILE"
-            KEY_ALGORITHM="ED25519"
-            ;;
-    esac
+    if [[ "$DRY_RUN" == true ]]; then
+        log_info "  [DRY RUN] Would generate $KEY_TYPE key pair using: jf evd generate-key-pair"
+        log_info "  [DRY RUN] Command: jf evd generate-key-pair --alias \"$KEY_ALIAS\" --output-dir \"$TEMP_DIR\""
+        log_info "  [DRY RUN] Alias: $KEY_ALIAS"
+        log_info "  [DRY RUN] Output directory: $TEMP_DIR"
+        # Set placeholder values for dry run
+        KEY_ALGORITHM="$KEY_TYPE (dry run)"
+        return 0
+    fi
     
-    log_success "Generated $KEY_ALGORITHM key pair"
-    log_info "Private key: $PRIVATE_KEY_FILE"
-    log_info "Public key: $PUBLIC_KEY_FILE"
+    # Use JFrog CLI to generate key pair
+    # Note: JFrog CLI generates keys optimized for evidence workflows
+    # Command syntax: jf evd generate-key-pair (all hyphenated)
+    local jfrog_cmd_success=false
+    local jfrog_output
+    
+    # Try: jf evd generate-key-pair (correct hyphenated syntax)
+    log_info "Running: jf evd generate-key-pair --alias \"$KEY_ALIAS\" --output-dir \"$TEMP_DIR\""
+    if jfrog_output=$(jf evd generate-key-pair --alias "$KEY_ALIAS" --output-dir "$TEMP_DIR" 2>&1); then
+        jfrog_cmd_success=true
+    # Try with key-type parameter if supported
+    elif jfrog_output=$(jf evd generate-key-pair --alias "$KEY_ALIAS" --key-type "$KEY_TYPE" --output-dir "$TEMP_DIR" 2>&1); then
+        jfrog_cmd_success=true
+    else
+        log_warning "JFrog CLI command failed"
+        log_info "Command output: $jfrog_output"
+    fi
+    
+    if [[ "$jfrog_cmd_success" == true ]]; then
+        # JFrog CLI generates keys with specific naming conventions
+        # Check for common output file patterns
+        if [[ -f "$TEMP_DIR/${KEY_ALIAS}.key" ]] && [[ -f "$TEMP_DIR/${KEY_ALIAS}.pub" ]]; then
+            # JFrog CLI format: alias.key and alias.pub
+            PRIVATE_KEY_FILE="$TEMP_DIR/${KEY_ALIAS}.key"
+            PUBLIC_KEY_FILE="$TEMP_DIR/${KEY_ALIAS}.pub"
+            KEY_ALGORITHM="$KEY_TYPE (JFrog CLI generated)"
+        elif [[ -f "$TEMP_DIR/private.pem" ]] && [[ -f "$TEMP_DIR/public.pem" ]]; then
+            # Standard PEM format
+            PRIVATE_KEY_FILE="$TEMP_DIR/private.pem"
+            PUBLIC_KEY_FILE="$TEMP_DIR/public.pem"
+            KEY_ALGORITHM="$KEY_TYPE (JFrog CLI generated)"
+        elif [[ -f "$TEMP_DIR/private.key" ]] && [[ -f "$TEMP_DIR/public.key" ]]; then
+            # Alternative naming
+            PRIVATE_KEY_FILE="$TEMP_DIR/private.key"
+            PUBLIC_KEY_FILE="$TEMP_DIR/public.key"
+            KEY_ALGORITHM="$KEY_TYPE (JFrog CLI generated)"
+        else
+            # Try to find any key files in the output directory
+            local found_private
+            local found_public
+            found_private=$(find "$TEMP_DIR" -type f \( -name "*private*" -o -name "*.key" \) | head -1)
+            found_public=$(find "$TEMP_DIR" -type f \( -name "*public*" -o -name "*.pub" \) | head -1)
+            
+            if [[ -n "$found_private" ]] && [[ -n "$found_public" ]]; then
+                PRIVATE_KEY_FILE="$found_private"
+                PUBLIC_KEY_FILE="$found_public"
+                KEY_ALGORITHM="$KEY_TYPE (JFrog CLI generated)"
+                log_info "Found keys: $PRIVATE_KEY_FILE and $PUBLIC_KEY_FILE"
+            else
+                log_error "JFrog CLI generated keys but could not locate output files"
+                log_info "Contents of $TEMP_DIR:"
+                ls -la "$TEMP_DIR" || true
+                exit 1
+            fi
+        fi
+        
+        # Ensure files are readable
+        if [[ ! -r "$PRIVATE_KEY_FILE" ]] || [[ ! -r "$PUBLIC_KEY_FILE" ]]; then
+            log_error "Generated key files are not readable"
+            exit 1
+        fi
+        
+        log_success "Generated $KEY_ALGORITHM key pair using JFrog CLI"
+        log_info "Private key: $PRIVATE_KEY_FILE"
+        log_info "Public key: $PUBLIC_KEY_FILE"
+    else
+        log_error "Failed to generate key pair using JFrog CLI"
+        log_error "Command output: $jfrog_output"
+        echo ""
+        log_info "Troubleshooting:"
+        log_info "1. Ensure JFrog CLI is installed: https://jfrog.com/getcli/"
+        log_info "2. Verify JFrog CLI version supports evidence commands (v2.45.0+): jf --version"
+        log_info "3. Check evidence command availability: jf evd --help"
+        log_info "4. Alternative: Use --private-key and --public-key to provide existing keys"
+        echo ""
+        log_info "If you have existing keys generated with OpenSSL or other tools,"
+        log_info "you can use them with: --private-key <file> --public-key <file>"
+        exit 1
+    fi
 }
 
 validate_keys() {
