@@ -105,12 +105,20 @@ Once repositories are forked, you'll need to:
 
 Before configuring repository secrets and variables, you need to set up your environment configuration file:
 
+**⚠️ IMPORTANT: Never commit `environment.sh` to Git!** This file contains sensitive secrets and tokens. The `environment.sh` file is already in `.gitignore` to prevent accidental commits.
+
 ```bash
-# Copy the example template (first time only)
+# Copy the example template to create your local environment file
+# This is a one-time setup step - the template is safe to commit
 cp environment.sh.example environment.sh
 
 # Edit environment.sh with your actual values
-# Required variables:
+# Use your preferred editor (nano, vim, code, etc.)
+nano environment.sh
+# or
+code environment.sh
+
+# Required variables to configure:
 #   - JFROG_URL: Your JFrog Platform URL (e.g., "https://your-instance.jfrog.io")
 #   - JFROG_ADMIN_TOKEN: JFrog Platform admin token (for key generation/upload)
 #   - EVIDENCE_KEY_ALIAS: Evidence key alias in JFrog Platform (e.g., "bookverse-evidence-key")
@@ -121,9 +129,16 @@ cp environment.sh.example environment.sh
 #   - EVIDENCE_PRIVATE_KEY: Private key for evidence signing (only if using existing keys)
 #   - GH_REPO_DISPATCH_TOKEN: GitHub PAT for cross-repo workflows (optional)
 
-# Source the environment file to export all variables
+# After editing, source the environment file to export all variables
 source environment.sh
 ```
+
+**Security Best Practices:**
+- ✅ Always use `environment.sh.example` as your starting template
+- ✅ Keep `environment.sh` local to your machine (it's in `.gitignore`)
+- ✅ Never share `environment.sh` in chat, email, or commit it to Git
+- ✅ Use strong, unique tokens for each environment
+- ✅ Rotate tokens regularly for production environments
 
 **Example `environment.sh` configuration (initial setup):**
 ```bash

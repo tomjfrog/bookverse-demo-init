@@ -1,0 +1,24 @@
+# Environment configuration files (may contain secrets)
+environment.sh
+scripts/environment.sh
+
+# Common environment file patterns
+.env
+.env.local
+.env.*.local
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.log
+
