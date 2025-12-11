@@ -1,6 +1,7 @@
 # Environment configuration files (may contain secrets)
+# Ignore environment.sh anywhere in the repository
+**/environment.sh
 environment.sh
-scripts/environment.sh
 
 # Common environment file patterns
 .env

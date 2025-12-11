@@ -33,6 +33,10 @@ export EVIDENCE_KEY_ALIAS="bookverse-evidence-key"
 #   3. Read from file (this script): Uncomment the line below and set the path
 # export EVIDENCE_PRIVATE_KEY="$(cat /path/to/your/evidence-key.pem)"
 
+# JFrog Platform Admin Token (Required)
+# Get this from your JFrog Platform admin account
+# Required for 3_update_evidence_keys.sh to upload keys to JFrog Platform
+export JFROG_ADMIN_TOKEN="your-jfrog-admin-token"
 # =============================================================================
 # 🌍 OPTIONAL ENVIRONMENT VARIABLES
 # =============================================================================
