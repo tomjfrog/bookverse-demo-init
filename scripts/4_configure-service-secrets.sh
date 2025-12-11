@@ -404,7 +404,7 @@ FAILURE_COUNT=0
 
 for repo_name in "${SERVICE_REPOS[@]}"; do
     FULL_REPO="$GH_ORG/$repo_name"
-    if [[ " ${FAILED_REPOS[*]} " =~ " ${FULL_REPO} " ]]; then
+    if [[ ${#FAILED_REPOS[@]} -gt 0 ]] && [[ " ${FAILED_REPOS[*]} " =~ " ${FULL_REPO} " ]]; then
         echo "  ❌ $FULL_REPO"
         echo "      - Status: ⚠️  Configuration failed"
         echo "      - Action Required: Check repository access permissions and GitHub CLI auth"
@@ -423,7 +423,7 @@ echo ""
 # 📊 Overall Status Report
 echo "📊 Overall Status:"
 echo "  ✅ Successfully configured: $SUCCESS_COUNT/${#SERVICE_REPOS[@]} repositories"
-if [ $FAILURE_COUNT -gt 0 ]; then
+if [ $FAILURE_COUNT -gt 0 ] && [ ${#FAILED_REPOS[@]} -gt 0 ]; then
     echo "  ❌ Failed to configure: $FAILURE_COUNT/${#SERVICE_REPOS[@]} repositories"
     echo ""
     echo "❌ Failed repositories:"
