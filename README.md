@@ -354,6 +354,7 @@ BookVerse consists of seven integrated components that work together to deliver 
 - [📈 **Evidence Collection**](docs/EVIDENCE_COLLECTION.md) - Compliance and audit trail automation
 - [🚀 **GitOps Deployment**](docs/GITOPS_DEPLOYMENT.md) - Continuous deployment workflows
 - [🔗 **JFrog Integration**](docs/JFROG_INTEGRATION.md) - Artifact management and security
+- [⭐ **AppTrust Showcase Guide**](docs/APPTRUST_SHOWCASE_GUIDE.md) - How to demonstrate AppTrust features
 
 ### 🔧 **Advanced Topics**
 
@@ -380,6 +381,7 @@ BookVerse provides everything you need to implement enterprise-grade microservic
 - **New to BookVerse?** Start with the [Getting Started Guide](docs/GETTING_STARTED.md)
 - **Want to understand the architecture?** Read the [Platform Architecture Overview](docs/ARCHITECTURE.md)
 - **Ready to run a demo?** Follow the [Demo Runbook](docs/DEMO_RUNBOOK.md)
+- **Want to showcase AppTrust features?** See the [AppTrust Showcase Guide](docs/APPTRUST_SHOWCASE_GUIDE.md)
 
 For additional support and documentation, explore the comprehensive guides above or visit the individual service repositories.
 
