@@ -203,7 +203,8 @@ SERVICES=(
     "bookverse-checkout"       # Secure payment processing and transaction management
     "bookverse-platform"      # Unified platform coordination and API gateway
     "bookverse-web"           # Customer-facing frontend and static asset delivery
-    "bookverse-helm"          # Kubernetes deployment manifests and infrastructure-as-code
+    "bookverse-helm"
+    "bookverse-infra"          # Kubernetes deployment manifests and infrastructure-as-code
 )
 
 echo "🚀 Forking BookVerse service repositories"
