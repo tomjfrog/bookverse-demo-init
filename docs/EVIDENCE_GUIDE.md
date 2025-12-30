@@ -276,11 +276,11 @@ The recommended approach is to use JFrog CLI's built-in key generation command, 
 
 ```bash
 # Generate key pair using JFrog CLI
-jf evd generate-key-pair --alias "bookverse-evidence-key" --output-dir ./keys
+jf evd generate-key-pair --alias "bookverse-signing-key" --output-dir ./keys
 
 # This generates:
-# - keys/bookverse-evidence-key.key (private key)
-# - keys/bookverse-evidence-key.pub (public key)
+# - keys/bookverse-signing-key.key (private key)
+# - keys/bookverse-signing-key.pub (public key)
 ```
 
 **Using OpenSSL (Alternative):**
@@ -362,7 +362,7 @@ curl -X POST "${JFROG_URL}/artifactory/api/security/keys/trusted" \
   -H "Authorization: Bearer ${JFROG_TOKEN}" \
   -H "Content-Type: application/json" \
   -d '{
-    "alias": "bookverse-evidence-key",
+    "alias": "bookverse-signing-key",
     "public_key": "-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----"
   }'
 ```
@@ -373,7 +373,7 @@ Evidence keys should be rotated regularly for security:
 
 ```bash
 # Generate new keys with date-based alias
-./scripts/update_evidence_keys.sh --generate --alias "bookverse-evidence-$(date +%Y%m%d)"
+./scripts/update_evidence_keys.sh --generate --alias "bookverse-signing-$(date +%Y%m%d)"
 
 # Emergency key rotation
 export EMERGENCY_ALIAS="emergency-evidence-$(date +%Y%m%d-%H%M%S)"
@@ -717,7 +717,7 @@ curl -H "Authorization: Bearer ${JF_ACCESS_TOKEN}" \
 
 # Manually update repository secrets
 gh secret set EVIDENCE_PRIVATE_KEY --body "$(cat private.pem)"
-gh variable set EVIDENCE_KEY_ALIAS --body "bookverse-evidence-key"
+gh variable set EVIDENCE_KEY_ALIAS --body "bookverse-signing-key"
 ```
 
 #### 3. Template Processing Errors

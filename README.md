@@ -121,7 +121,7 @@ code environment.sh
 # Required variables to configure:
 #   - JFROG_URL: Your JFrog Platform URL (e.g., "https://your-instance.jfrog.io")
 #   - JFROG_ADMIN_TOKEN: JFrog Platform admin token (for key generation/upload)
-#   - EVIDENCE_KEY_ALIAS: Evidence key alias in JFrog Platform (e.g., "bookverse-evidence-key")
+#   - EVIDENCE_KEY_ALIAS: Evidence key alias in JFrog Platform (e.g., "bookverse-signing-key")
 #
 # Optional variables:
 #   - PROJECT_KEY: JFrog project key (defaults to "bookverse")
@@ -144,7 +144,7 @@ source environment.sh
 ```bash
 export JFROG_URL="https://your-instance.jfrog.io"
 export JFROG_ADMIN_TOKEN="your-jfrog-admin-token"
-export EVIDENCE_KEY_ALIAS="bookverse-evidence-key"
+export EVIDENCE_KEY_ALIAS="bookverse-signing-key"
 export PROJECT_KEY="bookverse"
 # EVIDENCE_PRIVATE_KEY is not needed initially - will be generated in Step 2
 # export GH_REPO_DISPATCH_TOKEN="ghp_xxxxxxxxxxxx..."  # Optional

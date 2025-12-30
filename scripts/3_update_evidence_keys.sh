@@ -40,7 +40,7 @@
 #           alias:
 #             description: 'Key alias'
 #             required: true
-#             default: 'bookverse-evidence-key'
+#             default: 'bookverse-signing-key'
 #     jobs:
 #       update-keys:
 #         runs-on: ubuntu-latest
@@ -62,7 +62,7 @@
 #         agent any
 #         parameters {
 #             choice(name: 'KEY_TYPE', choices: ['rsa', 'ec', 'ed25519'], description: 'Key Algorithm')
-#             string(name: 'KEY_ALIAS', defaultValue: 'bookverse-evidence-key', description: 'Key Alias')
+#             string(name: 'KEY_ALIAS', defaultValue: 'bookverse-signing-key', description: 'Key Alias')
 #             booleanParam(name: 'DRY_RUN', defaultValue: false, description: 'Dry Run Mode')
 #         }
 #         environment {
@@ -99,7 +99,7 @@
 #       - name: keyAlias
 #         displayName: 'Key Alias'
 #         type: string
-#         default: 'bookverse-evidence-key'
+#         default: 'bookverse-signing-key'
 #       - name: dryRun
 #         displayName: 'Dry Run Mode'
 #         type: boolean
@@ -269,7 +269,7 @@ log_error() { echo -e "${RED}❌ $1${NC}"; }
 
 PRIVATE_KEY_FILE=""
 PUBLIC_KEY_FILE=""
-KEY_ALIAS="${EVIDENCE_KEY_ALIAS:-bookverse-evidence-key}"  # Default from environment, fallback to default
+KEY_ALIAS="${EVIDENCE_KEY_ALIAS:-bookverse-signing-key}"  # Default from environment, fallback to default
 GITHUB_ORG=""
 DRY_RUN=false
 GENERATE_KEYS=false
@@ -315,7 +315,7 @@ EXISTING KEYS:
     --public-key <file>     Path to public key PEM file
 
 OPTIONAL ARGUMENTS:
-    --alias <name>          Key alias (default: from EVIDENCE_KEY_ALIAS env var, or bookverse-evidence-key)
+    --alias <name>          Key alias (default: from EVIDENCE_KEY_ALIAS env var, or bookverse-signing-key)
     --no-jfrog              Skip JFrog Platform update
     --dry-run               Show what would be done without making changes
     --help                  Show this help message

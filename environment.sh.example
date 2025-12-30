@@ -28,8 +28,8 @@ export JFROG_ADMIN_TOKEN="your-jfrog-admin-token"
 
 # Evidence signing key alias in JFrog Platform
 # This is the alias of the key you created in JFrog Platform for evidence signing
-# Example: "bookverse-evidence-key" or "bookverse-evidence-key"
-export EVIDENCE_KEY_ALIAS="bookverse-evidence-key"
+# Example: "bookverse-signing-key" or "bookverse-signing-key"
+export EVIDENCE_KEY_ALIAS="bookverse-signing-key"
 
 # Evidence signing private key (PEM format) - OPTIONAL
 # This is only needed if you're providing existing keys to configure_service_secrets.sh
