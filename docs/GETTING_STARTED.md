@@ -241,7 +241,7 @@ kubectl get nodes
 ---
 ### 🔄 **Step 4: Switch Platform (Configure Target JFrog Platform)**
 
-Run the Switch Platform workflow to configure your JFrog Platform instance:
+Run the Switch Platform workflow to configure your JFrog Platform instance. This workflow now supports both **initial setup** and **platform migration**:
 
 ```bash
 # Navigate to GitHub Actions in your bookverse-demo-init repository
@@ -250,16 +250,41 @@ Run the Switch Platform workflow to configure your JFrog Platform instance:
 # 1. Select "🔄 Switch Platform" workflow
 # 2. Click "Run workflow" 
 # 3. Enter the following inputs:
+#    - Setup Mode: initial_setup (for first-time setup) or platform_switch (for migration)
 #    - JFrog Platform Host: https://your-instance.jfrog.io
 #    - Admin Token: (leave empty - secret is already configured)
-#    - Confirmation: SWITCH
-#    - Update K8s: true (if you set up Kubernetes in Step 3) or false (if skipping Kubernetes)
+#    - Confirmation: SWITCH (only required for platform_switch mode)
+#    - Generate Evidence Keys: true (recommended for initial_setup)
+#    - Evidence Key Type: rsa (or ec, ed25519)
+#    - Evidence Key Alias: bookverse-signing-key
+#    - Update Code URLs: false (for initial_setup, true for platform_switch)
+#    - Update K8s: true (if you set up Kubernetes in Step 3) or false
 
-# OR run via GitHub CLI (admin token not needed since secret is configured):
-gh workflow run "🔄-switch-platform.yml" \
+# OR run via GitHub CLI for initial setup:
+gh workflow run "switch-platform.yml" \
+  --field setup_mode="initial_setup" \
+  --field jpd_host="https://your-instance.jfrog.io" \
+  --field generate_evidence_keys=true \
+  --field evidence_key_type="rsa" \
+  --field update_code_urls=false \
+  --field update_k8s=true
+
+# OR for platform migration:
+gh workflow run "switch-platform.yml" \
+  --field setup_mode="platform_switch" \
   --field jpd_host="https://your-instance.jfrog.io" \
   --field confirm_switch="SWITCH" \
-  --field update_k8s=true```
+  --field update_code_urls=true \
+  --field update_k8s=true
+```
+
+**What the Switch Platform workflow does:**
+- ✅ Configures `JFROG_URL`, `DOCKER_REGISTRY`, `PROJECT_KEY` variables in all repos
+- ✅ Sets `JFROG_ADMIN_TOKEN` secret in all repos
+- ✅ Generates and distributes evidence keys (if enabled)
+- ✅ Updates hardcoded URLs in source code (for platform_switch mode)
+- ✅ Creates PRs with code changes (for platform_switch mode)
+- ✅ Validates platform connectivity and authentication
 
 ### 🚀 **Step 5: Setup Platform (Provision Complete Environment)**
 
@@ -286,8 +311,8 @@ The Setup Platform workflow will automatically:
 - Configure AppTrust applications with lifecycle stages
 - Create OIDC integrations for GitHub authentication
 - Set up users and role-based access control
-- Generate evidence keys for cryptographic signing
-- Configure all GitHub repository variables
+
+**Note**: Evidence keys and repository variables are now configured by the Switch Platform workflow (Step 4), not the Setup Platform workflow.
 
 **The workflow includes comprehensive validation and will fail if any setup step encounters issues. No additional verification is needed.**
 

@@ -3,6 +3,21 @@
 # BookVerse Platform - Evidence Key Management Script
 # =============================================================================
 #
+# ⚠️  DEPRECATION NOTICE:
+#     This script is maintained for backward compatibility. For new setups, we recommend
+#     using the "🔄 Switch Platform" GitHub Actions workflow which provides:
+#     - Integrated evidence key generation
+#     - Automatic key distribution
+#     - JFrog Platform upload
+#     - Better error handling
+#
+#     To use the workflow:
+#     1. Go to: https://github.com/YOUR-ORG/bookverse-demo-init/actions
+#     2. Select "🔄 Switch Platform" workflow
+#     3. Set setup_mode to "initial_setup"
+#     4. Enable "generate_evidence_keys" option
+#     5. Provide JFrog Platform URL and admin token
+#
 # Comprehensive evidence key generation and distribution for cryptographic signing
 #
 # 📋 USAGE EXAMPLES - COMPREHENSIVE EXECUTION PATTERNS:

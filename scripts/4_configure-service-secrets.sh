@@ -3,13 +3,35 @@
 # BookVerse Platform - Service Repository Secrets and Variables Configuration Script
 # =============================================================================
 #
-# Comprehensive GitHub repository secrets and variables configuration for BookVerse services
+# ⚠️  DEPRECATION NOTICE:
+#     This script is maintained for backward compatibility. For new setups, we recommend
+#     using the "🔄 Switch Platform" GitHub Actions workflow which provides:
+#     - Initial setup mode detection
+#     - Evidence key generation
+#     - Code URL updates
+#     - Better error handling and validation
+#
+#     To use the workflow:
+#     1. Go to: https://github.com/YOUR-ORG/bookverse-demo-init/actions
+#     2. Select "🔄 Switch Platform" workflow
+#     3. Set setup_mode to "initial_setup"
+#     4. Provide JFrog Platform URL and admin token
 #
 # 🎯 PURPOSE:
 #     This script provides comprehensive GitHub repository secrets and variables configuration
 #     for the BookVerse platform, implementing secure distribution of required configuration
 #     across all service repositories, optional GitHub dispatch token management,
 #     and automated validation for continuous integration and deployment workflows.
+#
+# 📋 RECOMMENDED APPROACH:
+#     Use the "🔄 Switch Platform" GitHub Actions workflow for configuration:
+#     1. Go to: https://github.com/YOUR-ORG/bookverse-demo-init/actions
+#     2. Select "🔄 Switch Platform" workflow
+#     3. Click "Run workflow"
+#     4. Set setup_mode to "initial_setup" for first-time setup
+#     5. Provide JFrog Platform URL and admin token
+#
+#     This script now calls the Switch Platform script directly for local execution.
 #
 # 🏗️ ARCHITECTURE:
 #     - Multi-Repository Management: Automated secret/variable configuration across service repos

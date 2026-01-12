@@ -1,12 +1,30 @@
 {
   "folders": [
-    { "path": ".", "name": "bookverse-demo-init" },
-    { "path": "../bookverse-inventory" },
-    { "path": "../bookverse-recommendations" },
-    { "path": "../bookverse-checkout" },
-    { "path": "../bookverse-platform" },
-    { "path": "../bookverse-web" },
-    { "path": "../bookverse-helm" }
+    {
+      "path": ".",
+      "name": "bookverse-demo-init"
+    },
+    {
+      "path": "../bookverse-inventory"
+    },
+    {
+      "path": "../bookverse-recommendations"
+    },
+    {
+      "path": "../bookverse-checkout"
+    },
+    {
+      "path": "../bookverse-platform"
+    },
+    {
+      "path": "../bookverse-web"
+    },
+    {
+      "path": "../bookverse-helm"
+    },
+    {
+      "path": "../bookverse-infra"
+    }
   ],
   "settings": {
     "markdownlint.enable": false,

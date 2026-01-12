@@ -50,6 +50,22 @@ trap on_error ERR
 NEW_JFROG_URL="${NEW_JFROG_URL}"
 NEW_JFROG_ADMIN_TOKEN="${NEW_JFROG_ADMIN_TOKEN}"
 
+# Setup mode detection: "initial_setup" or "platform_switch" (default)
+SETUP_MODE="${SETUP_MODE:-platform_switch}"
+# Project key for JFrog Platform (default: bookverse)
+PROJECT_KEY="${PROJECT_KEY:-bookverse}"
+# Evidence key configuration
+GENERATE_EVIDENCE_KEYS="${GENERATE_EVIDENCE_KEYS:-false}"
+EVIDENCE_KEY_ALIAS="${EVIDENCE_KEY_ALIAS:-bookverse-signing-key}"
+EVIDENCE_KEY_TYPE="${EVIDENCE_KEY_TYPE:-rsa}"
+# Code URL replacement control (from workflow: UPDATE_CODE_URLS)
+# If UPDATE_CODE_URLS is false, skip code updates
+UPDATE_CODE_URLS="${UPDATE_CODE_URLS:-true}"
+SKIP_CODE_UPDATES="false"
+if [[ "$UPDATE_CODE_URLS" == "false" ]]; then
+    SKIP_CODE_UPDATES="true"
+fi
+
 BOOKVERSE_REPOS=(
     "bookverse-inventory"
     "bookverse-recommendations" 
@@ -114,10 +130,65 @@ validate_host_format() {
     log_success "Host format is valid: $NEW_JFROG_URL"
 }
 
+detect_setup_mode() {
+    log_info "Detecting setup mode..."
+    
+    if [[ "$SETUP_MODE" == "initial_setup" ]]; then
+        log_info "Mode: Initial Setup"
+        log_info "  - Will configure repositories for first-time setup"
+        if [[ "$UPDATE_CODE_URLS" == "false" ]] || [[ "$SKIP_CODE_UPDATES" == "true" ]]; then
+            log_info "  - Will skip code URL replacement (no old URLs to replace)"
+            SKIP_CODE_UPDATES=true
+        else
+            log_info "  - Will update code URLs (UPDATE_CODE_URLS=true)"
+            SKIP_CODE_UPDATES=false
+        fi
+        echo ""
+        return 0
+    fi
+    
+    # Auto-detect: check if any repo has JFROG_URL variable set
+    local current_url="${GITHUB_REPOSITORY_VARS_JFROG_URL:-}"
+    local has_existing_config=false
+    
+    # Try to get JFROG_URL from first repo
+    local first_repo="${BOOKVERSE_REPOS[0]}"
+    local full_repo="$GITHUB_ORG/$first_repo"
+    if gh repo view "$full_repo" >/dev/null 2>&1; then
+        current_url=$(get_variable_value "$full_repo" "JFROG_URL" 2>/dev/null || echo "")
+        if [[ -n "$current_url" ]]; then
+            has_existing_config=true
+        fi
+    fi
+    
+    if [[ "$has_existing_config" == false ]]; then
+        log_info "Mode: Initial Setup (auto-detected)"
+        log_info "  - No existing JFROG_URL found in repositories"
+        log_info "  - Will configure repositories for first-time setup"
+        SKIP_CODE_UPDATES=true
+        SETUP_MODE="initial_setup"
+    else
+        log_info "Mode: Platform Switch (auto-detected)"
+        log_info "  - Existing configuration found"
+        SETUP_MODE="platform_switch"
+        check_same_platform
+    fi
+    echo ""
+}
+
 check_same_platform() {
     log_info "Checking for same-platform switch..."
     
     local current_url="${GITHUB_REPOSITORY_VARS_JFROG_URL:-}"
+    
+    # Try to get from first repo if not set
+    if [[ -z "$current_url" ]]; then
+        local first_repo="${BOOKVERSE_REPOS[0]}"
+        local full_repo="$GITHUB_ORG/$first_repo"
+        if gh repo view "$full_repo" >/dev/null 2>&1; then
+            current_url=$(get_variable_value "$full_repo" "JFROG_URL" 2>/dev/null || echo "")
+        fi
+    fi
     
     current_url=$(echo "$current_url" | sed 's:/*$::')
     local new_url=$(echo "$NEW_JFROG_URL" | sed 's:/*$::')
@@ -311,6 +382,11 @@ update_repository_secrets_and_variables() {
         repo_ok=0
     fi
 
+    if ! output=$(gh variable set PROJECT_KEY --body "$PROJECT_KEY" --repo "$full_repo" 2>&1); then
+        log_warning "  → Failed to update PROJECT_KEY: ${output}"
+        repo_ok=0
+    fi
+
     if ! verify_variable_with_retry "$full_repo" "JFROG_URL" "$NEW_JFROG_URL"; then
         log_warning "  → JFROG_URL verification failed, retrying update once..."
         gh variable set JFROG_URL --body "$NEW_JFROG_URL" --repo "$full_repo" >/dev/null 2>&1 || true
@@ -330,6 +406,28 @@ update_repository_secrets_and_variables() {
         fi
     fi
 
+    # Update evidence keys if provided
+    if [[ -n "${EVIDENCE_PRIVATE_KEY:-}" ]] && [[ -n "${EVIDENCE_PUBLIC_KEY:-}" ]]; then
+        log_info "  → Updating evidence keys..."
+        if printf "%s" "${EVIDENCE_PRIVATE_KEY}" | gh secret set EVIDENCE_PRIVATE_KEY --repo "$full_repo" 2>&1 >/dev/null; then
+            log_success "    ✅ EVIDENCE_PRIVATE_KEY updated"
+        else
+            log_warning "    ⚠️  Failed to update EVIDENCE_PRIVATE_KEY"
+        fi
+        
+        if gh variable set EVIDENCE_PUBLIC_KEY --body "${EVIDENCE_PUBLIC_KEY}" --repo "$full_repo" 2>&1 >/dev/null; then
+            log_success "    ✅ EVIDENCE_PUBLIC_KEY updated"
+        else
+            log_warning "    ⚠️  Failed to update EVIDENCE_PUBLIC_KEY"
+        fi
+        
+        if gh variable set EVIDENCE_KEY_ALIAS --body "${EVIDENCE_KEY_ALIAS}" --repo "$full_repo" 2>&1 >/dev/null; then
+            log_success "    ✅ EVIDENCE_KEY_ALIAS updated"
+        else
+            log_warning "    ⚠️  Failed to update EVIDENCE_KEY_ALIAS"
+        fi
+    fi
+
     if [[ $repo_ok -eq 1 ]]; then
         log_success "  → $repo updated successfully"
         SUCCEEDED_REPOS+=("$repo")
@@ -337,6 +435,123 @@ update_repository_secrets_and_variables() {
     else
         log_warning "  → $repo updated with errors"
         FAILED_REPOS+=("$repo")
+        return 1
+    fi
+}
+
+generate_evidence_keys() {
+    if [[ "$GENERATE_EVIDENCE_KEYS" != "true" ]]; then
+        return 0
+    fi
+    
+    log_info "Generating evidence keys..."
+    log_info "  Key type: $EVIDENCE_KEY_TYPE"
+    log_info "  Key alias: $EVIDENCE_KEY_ALIAS"
+    
+    if ! command -v jf &> /dev/null; then
+        log_error "JFrog CLI (jf) is required for key generation but not installed"
+        log_info "Install from: https://jfrog.com/getcli/"
+        log_info "Skipping evidence key generation"
+        return 1
+    fi
+    
+    local temp_dir
+    temp_dir=$(mktemp -d)
+    trap "rm -rf '$temp_dir'" EXIT
+    
+    log_info "  → Generating $EVIDENCE_KEY_TYPE key pair..."
+    if ! jf evd generate-key-pair --alias "$EVIDENCE_KEY_ALIAS" --output-dir "$temp_dir" 2>&1; then
+        log_warning "  ⚠️  Failed to generate keys with JFrog CLI, trying alternative method..."
+        # Fallback to OpenSSL if JFrog CLI fails
+        if ! command -v openssl &> /dev/null; then
+            log_error "OpenSSL is required for key generation but not installed"
+            return 1
+        fi
+        
+        case "$EVIDENCE_KEY_TYPE" in
+            rsa)
+                openssl genrsa -out "$temp_dir/private.pem" 2048
+                openssl rsa -in "$temp_dir/private.pem" -pubout -out "$temp_dir/public.pem"
+                ;;
+            ec)
+                openssl ecparam -genkey -name secp256r1 -noout -out "$temp_dir/private.pem"
+                openssl ec -in "$temp_dir/private.pem" -pubout -out "$temp_dir/public.pem"
+                ;;
+            ed25519)
+                openssl genpkey -algorithm ED25519 -out "$temp_dir/private.pem"
+                openssl pkey -in "$temp_dir/private.pem" -pubout -out "$temp_dir/public.pem"
+                ;;
+            *)
+                log_error "Unsupported key type: $EVIDENCE_KEY_TYPE"
+                return 1
+                ;;
+        esac
+    else
+        # JFrog CLI generates keys with specific naming
+        if [[ -f "$temp_dir/${EVIDENCE_KEY_ALIAS}.key" ]] && [[ -f "$temp_dir/${EVIDENCE_KEY_ALIAS}.pub" ]]; then
+            mv "$temp_dir/${EVIDENCE_KEY_ALIAS}.key" "$temp_dir/private.pem" 2>/dev/null || true
+            mv "$temp_dir/${EVIDENCE_KEY_ALIAS}.pub" "$temp_dir/public.pem" 2>/dev/null || true
+        fi
+    fi
+    
+    if [[ ! -f "$temp_dir/private.pem" ]] || [[ ! -f "$temp_dir/public.pem" ]]; then
+        log_error "Failed to generate key files"
+        return 1
+    fi
+    
+    export EVIDENCE_PRIVATE_KEY=$(cat "$temp_dir/private.pem")
+    export EVIDENCE_PUBLIC_KEY=$(cat "$temp_dir/public.pem")
+    
+    log_success "  ✅ Evidence keys generated successfully"
+    
+    # Upload to JFrog Platform
+    upload_evidence_key_to_jfrog "$temp_dir/public.pem" "$EVIDENCE_KEY_ALIAS"
+    
+    return 0
+}
+
+upload_evidence_key_to_jfrog() {
+    local public_key_file="$1"
+    local alias="$2"
+    
+    log_info "  → Uploading public key to JFrog Platform..."
+    
+    local public_key_content
+    public_key_content=$(cat "$public_key_file")
+    
+    local payload
+    payload=$(jq -n \
+        --arg alias "$alias" \
+        --arg public_key "$public_key_content" \
+        '{
+            "alias": $alias,
+            "public_key": $public_key
+        }' 2>/dev/null)
+    
+    if [[ -z "$payload" ]]; then
+        log_warning "    ⚠️  jq not available, skipping JFrog upload"
+        return 0
+    fi
+    
+    local response
+    local http_code
+    response=$(curl -s -w "%{http_code}" \
+        -X POST \
+        -H "Authorization: Bearer $NEW_JFROG_ADMIN_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d "$payload" \
+        "$NEW_JFROG_URL/artifactory/api/security/keys/trusted" 2>/dev/null)
+    
+    http_code="${response: -3}"
+    
+    if [[ "$http_code" == "200" ]] || [[ "$http_code" == "201" ]]; then
+        log_success "    ✅ Public key uploaded to JFrog Platform"
+        return 0
+    elif [[ "$http_code" == "409" ]]; then
+        log_info "    ℹ️  Key '$alias' already exists in JFrog Platform"
+        return 0
+    else
+        log_warning "    ⚠️  Failed to upload public key (HTTP $http_code)"
         return 1
     fi
 }
@@ -350,6 +565,12 @@ update_all_repositories() {
     for repo in "${BOOKVERSE_REPOS[@]}"; do
         if update_repository_secrets_and_variables "$repo"; then
             ((++success_count))
+        fi
+
+        # Skip code updates if requested (initial setup or UPDATE_CODE_URLS=false)
+        if [[ "$SKIP_CODE_UPDATES" == "true" ]]; then
+            log_info "  → Skipping code URL replacement"
+            continue
         fi
 
         local default_branch
@@ -375,7 +596,7 @@ update_all_repositories() {
             local changes_made=false
             
             for pattern in "${old_patterns[@]}"; do
-                if rg -l "$pattern" >/dev/null 2>&1; then
+                if command -v rg >/dev/null 2>&1 && rg -l "$pattern" >/dev/null 2>&1; then
                     rg -l "$pattern" | xargs sed -i '' -e "s|$pattern|${new_registry}|g"
                     changes_made=true
                     log_info "  → Replaced $pattern with ${new_registry}"
@@ -384,7 +605,7 @@ update_all_repositories() {
             
             for pattern in "${old_patterns[@]}"; do
                 local url_pattern="https://$pattern"
-                if rg -l "$url_pattern" >/dev/null 2>&1; then
+                if command -v rg >/dev/null 2>&1 && rg -l "$url_pattern" >/dev/null 2>&1; then
                     rg -l "$url_pattern" | xargs sed -i '' -e "s|$url_pattern|${NEW_JFROG_URL}|g"
                     changes_made=true
                     log_info "  → Replaced $url_pattern with ${NEW_JFROG_URL}"
@@ -460,8 +681,13 @@ final_verification_pass() {
 
 
 main() {
-    echo "🔄 JFrog Platform Deployment (JPD) Switch"
-    echo "=========================================="
+    if [[ "$SETUP_MODE" == "initial_setup" ]]; then
+        echo "🚀 BookVerse Platform - Initial Setup"
+        echo "======================================"
+    else
+        echo "🔄 JFrog Platform Deployment (JPD) Switch"
+        echo "=========================================="
+    fi
     echo ""
     
     validate_inputs
@@ -470,7 +696,7 @@ main() {
     validate_host_format
     echo ""
     
-    check_same_platform
+    detect_setup_mode
     
     test_platform_connectivity
     echo ""
@@ -483,6 +709,12 @@ main() {
     
     validate_gh_auth
     echo ""
+    
+    # Generate evidence keys if requested
+    if [[ "$GENERATE_EVIDENCE_KEYS" == "true" ]]; then
+        generate_evidence_keys
+        echo ""
+    fi
     
     update_all_repositories
     echo ""

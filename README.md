@@ -95,11 +95,13 @@ The script forks these service repositories:
 ### After Forking
 
 Once repositories are forked, you'll need to:
-1. **Configure Environment Variables**: Set up your JFrog Platform configuration using `environment.sh`
-2. **Generate Evidence Keys** (optional): Use `3_update_evidence_keys.sh` to generate new keys
-3. **Configure Repository Variables & Secrets**: Use the automated script to configure all service repositories
-4. **Set Up OIDC**: Configure OIDC providers for each service (automated via Setup Platform workflow)
-5. **Run Setup Platform**: Execute the Setup Platform workflow to provision your JFrog Platform environment
+1. **Switch Platform** (Recommended): Use the "🔄 Switch Platform" GitHub Actions workflow to:
+   - Configure all repository variables and secrets
+   - Generate and distribute evidence keys
+   - Set up JFrog Platform configuration
+2. **Setup Platform**: Execute the Setup Platform workflow to provision JFrog infrastructure (projects, repos, OIDC)
+
+**Alternative (Legacy)**: You can still use the local scripts (`3_update_evidence_keys.sh`, `4_configure-service-secrets.sh`) for backward compatibility, but the Switch Platform workflow is recommended for new setups.
 
 #### Step 1: Configure Environment Variables
 

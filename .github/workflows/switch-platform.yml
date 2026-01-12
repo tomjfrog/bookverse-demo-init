@@ -3,6 +3,14 @@ name: '🔄 Switch Platform'
 on:
   workflow_dispatch:
     inputs:
+      setup_mode:
+        description: 'Operation mode: initial_setup (first-time setup) or platform_switch (migrate/refresh)'
+        required: true
+        type: choice
+        options:
+          - initial_setup
+          - platform_switch
+        default: 'platform_switch'
       jpd_host:
         description: 'JFrog Platform Host (e.g., https://mycompany.jfrog.io)'
         required: true
@@ -12,9 +20,33 @@ on:
         required: false
         type: string
       confirm_switch:
-        description: 'Type "SWITCH" to confirm platform migration'
-        required: true
+        description: 'Type "SWITCH" to confirm (required for platform_switch mode)'
+        required: false
         type: string
+      generate_evidence_keys:
+        description: 'Generate new evidence keys if not present (recommended for initial_setup)'
+        required: false
+        type: boolean
+        default: true
+      evidence_key_type:
+        description: 'Evidence key algorithm (rsa, ec, ed25519)'
+        required: false
+        type: choice
+        options:
+          - rsa
+          - ec
+          - ed25519
+        default: 'rsa'
+      evidence_key_alias:
+        description: 'Evidence key alias (default: bookverse-signing-key)'
+        required: false
+        type: string
+        default: 'bookverse-signing-key'
+      update_code_urls:
+        description: 'Update hardcoded URLs in source code (skip for initial_setup)'
+        required: false
+        type: boolean
+        default: true
       update_k8s:
         description: 'Update Kubernetes cluster registry (requires kubectl access)'
         required: false
@@ -45,12 +77,17 @@ jobs:
           
       - name: Validate Confirmation
         run: |
-          if [[ "${{ github.event.inputs.confirm_switch }}" != "SWITCH" ]]; then
-            echo "❌ Platform switch cancelled: Invalid confirmation input"
-            echo "   You must type 'SWITCH' to confirm platform migration"
-            exit 1
+          SETUP_MODE="${{ github.event.inputs.setup_mode }}"
+          if [[ "$SETUP_MODE" == "platform_switch" ]]; then
+            if [[ "${{ github.event.inputs.confirm_switch }}" != "SWITCH" ]]; then
+              echo "❌ Platform switch cancelled: Invalid confirmation input"
+              echo "   You must type 'SWITCH' to confirm platform migration"
+              exit 1
+            fi
+            echo "✅ Platform switch confirmed. Proceeding with platform migration..."
+          else
+            echo "✅ Initial setup mode detected. Skipping migration confirmation."
           fi
-          echo "✅ Platform switch confirmed. Proceeding with platform migration..."
 
       - name: Mask sensitive inputs
         run: |
@@ -61,9 +98,15 @@ jobs:
             echo "::add-mask::${{ secrets.JFROG_ADMIN_TOKEN }}"
           fi
           
-      - name: Switch JFrog Platform
+      - name: Switch/Setup JFrog Platform
         run: |
           export NEW_JFROG_URL='${{ github.event.inputs.jpd_host }}'
+          export SETUP_MODE='${{ github.event.inputs.setup_mode }}'
+          export GENERATE_EVIDENCE_KEYS='${{ github.event.inputs.generate_evidence_keys }}'
+          export EVIDENCE_KEY_TYPE='${{ github.event.inputs.evidence_key_type }}'
+          export EVIDENCE_KEY_ALIAS='${{ github.event.inputs.evidence_key_alias }}'
+          export UPDATE_CODE_URLS='${{ github.event.inputs.update_code_urls }}'
+          
           if [[ -n "${{ github.event.inputs.admin_token }}" ]]; then
             export NEW_JFROG_ADMIN_TOKEN='${{ github.event.inputs.admin_token }}'
             echo "🔐 Using admin_token from workflow input"
@@ -77,15 +120,26 @@ jobs:
           export NO_COLOR=1
           LOG_FILE="switch-platform.log"
           echo "LOG_FILE=$LOG_FILE" >> "$GITHUB_ENV"
-          echo "🔄 Starting JFrog Platform Switch"
-          echo "=================================================="
-          if [[ -z "${{ vars.JFROG_URL }}" ]]; then
-            echo "❌ Missing vars.JFROG_URL. Set repository variable JFROG_URL before switching."
-            exit 1
+          
+          if [[ "$SETUP_MODE" == "initial_setup" ]]; then
+            echo "🚀 Starting Initial Platform Setup"
+            echo "=================================================="
+            echo "Mode: Initial Setup (first-time configuration)"
+            echo "Target Platform: ${{ github.event.inputs.jpd_host }}"
+            echo "Generate Evidence Keys: $GENERATE_EVIDENCE_KEYS"
+            echo ""
+          else
+            echo "🔄 Starting JFrog Platform Switch"
+            echo "=================================================="
+            if [[ -z "${{ vars.JFROG_URL }}" ]]; then
+              echo "⚠️  Missing vars.JFROG_URL. Treating as initial setup."
+              export SETUP_MODE="initial_setup"
+            else
+              echo "From: ${{ vars.JFROG_URL }}"
+              echo "To: ${{ github.event.inputs.jpd_host }}"
+            fi
+            echo ""
           fi
-          echo "From: ${{ vars.JFROG_URL }}"
-          echo "To: ${{ github.event.inputs.jpd_host }}"
-          echo ""
 
           set -o pipefail
           CONTINUE_ON_AUTH_FAILURE=1 ./.github/scripts/setup/switch_jfrog_platform.sh 2>&1 | tee "$LOG_FILE"
@@ -196,18 +250,33 @@ jobs:
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "🎯 **BookVerse is now configured for the new platform**" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "### ✅ Migration Details:" >> $GITHUB_STEP_SUMMARY
-            echo "- 🔗 **From**: \`${{ vars.JFROG_URL }}\`" >> $GITHUB_STEP_SUMMARY
-            echo "- 🎯 **To**: \`${{ github.event.inputs.jpd_host }}\`" >> $GITHUB_STEP_SUMMARY
+            SETUP_MODE="${{ github.event.inputs.setup_mode }}"
+            if [[ "$SETUP_MODE" == "initial_setup" ]]; then
+              echo "### ✅ Initial Setup Details:" >> $GITHUB_STEP_SUMMARY
+              echo "- 🎯 **Platform**: \`${{ github.event.inputs.jpd_host }}\`" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "### ✅ Migration Details:" >> $GITHUB_STEP_SUMMARY
+              echo "- 🔗 **From**: \`${{ vars.JFROG_URL }}\`" >> $GITHUB_STEP_SUMMARY
+              echo "- 🎯 **To**: \`${{ github.event.inputs.jpd_host }}\`" >> $GITHUB_STEP_SUMMARY
+            fi
             echo "- 📦 **Updated repositories**: All BookVerse service repositories" >> $GITHUB_STEP_SUMMARY
             echo "- 🔐 **Environment variables**: JFROG_URL, DOCKER_REGISTRY updated" >> $GITHUB_STEP_SUMMARY
             echo "- ✅ **Validation**: New platform connectivity confirmed" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "### 📋 Next Steps:" >> $GITHUB_STEP_SUMMARY
-            echo "1. 🏗️ **Run Setup Platform workflow** to initialize the new environment" >> $GITHUB_STEP_SUMMARY
-            echo "2. 🧪 **Test CI/CD workflows** to verify integration" >> $GITHUB_STEP_SUMMARY
-            echo "3. 🔍 **Check service repositories** for updated configurations" >> $GITHUB_STEP_SUMMARY
-            echo "4. ⚙️ **Verify platform-specific settings** (OIDC, webhooks, etc.)" >> $GITHUB_STEP_SUMMARY
+            SETUP_MODE="${{ github.event.inputs.setup_mode }}"
+            if [[ "$SETUP_MODE" == "initial_setup" ]]; then
+              echo "### 📋 Next Steps:" >> $GITHUB_STEP_SUMMARY
+              echo "1. 🏗️ **Run Setup Platform workflow** to create JFrog infrastructure (projects, repos, OIDC)" >> $GITHUB_STEP_SUMMARY
+              echo "2. 🧪 **Test CI/CD workflows** to verify integration" >> $GITHUB_STEP_SUMMARY
+              echo "3. 🔍 **Verify repository configurations** are correct" >> $GITHUB_STEP_SUMMARY
+              echo "4. ⚙️ **Check evidence keys** were generated and distributed" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "### 📋 Next Steps:" >> $GITHUB_STEP_SUMMARY
+              echo "1. 🏗️ **Run Setup Platform workflow** to initialize the new environment" >> $GITHUB_STEP_SUMMARY
+              echo "2. 🧪 **Test CI/CD workflows** to verify integration" >> $GITHUB_STEP_SUMMARY
+              echo "3. 🔍 **Check service repositories** for updated configurations" >> $GITHUB_STEP_SUMMARY
+              echo "4. ⚙️ **Verify platform-specific settings** (OIDC, webhooks, etc.)" >> $GITHUB_STEP_SUMMARY
+            fi
             if [[ "${{ github.event.inputs.update_k8s }}" != "true" ]]; then
               echo "5. 🔧 **Update Kubernetes cluster** manually (see documentation)" >> $GITHUB_STEP_SUMMARY
             fi
