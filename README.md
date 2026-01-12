@@ -94,99 +94,70 @@ The script forks these service repositories:
 
 ### After Forking
 
-Once repositories are forked, you'll need to:
-1. **Switch Platform** (Recommended): Use the "🔄 Switch Platform" GitHub Actions workflow to:
-   - Configure all repository variables and secrets
-   - Generate and distribute evidence keys
+Once repositories are forked, the next steps are:
+
+1. **🔄 Switch Platform** (Main Entry Point): Use the "🔄 Switch Platform" GitHub Actions workflow to:
+   - Configure all repository variables and secrets across all service repos
+   - Generate and distribute evidence keys automatically
    - Set up JFrog Platform configuration
-2. **Setup Platform**: Execute the Setup Platform workflow to provision JFrog infrastructure (projects, repos, OIDC)
+   - This is the **recommended approach** for new setups
 
-**Alternative (Legacy)**: You can still use the local scripts (`3_update_evidence_keys.sh`, `4_configure-service-secrets.sh`) for backward compatibility, but the Switch Platform workflow is recommended for new setups.
+2. **🚀 Setup Platform**: Execute the Setup Platform workflow to provision JFrog infrastructure:
+   - Create the `bookverse` project in JFrog Platform
+   - Set up artifact repositories (Docker, PyPI, npm, etc.)
+   - Configure AppTrust applications with lifecycle stages
+   - Create OIDC integrations for GitHub authentication
+   - Set up users and role-based access control
 
-#### Step 1: Configure Environment Variables
+**📋 Complete Setup Instructions**: See the [Getting Started Guide](docs/GETTING_STARTED.md) for detailed step-by-step instructions.
 
-Before configuring repository secrets and variables, you need to set up your environment configuration file:
+#### Quick Setup Overview
 
-**⚠️ IMPORTANT: Never commit `environment.sh` to Git!** This file contains sensitive secrets and tokens. The `environment.sh` file is already in `.gitignore` to prevent accidental commits.
+**Step 1: Configure GitHub Repository Secrets** (in `bookverse-demo-init` repository)
 
-```bash
-# Copy the example template to create your local environment file
-# This is a one-time setup step - the template is safe to commit
-cp environment.sh.example environment.sh
+Before running the Switch Platform workflow, you need to set up repository secrets in the `bookverse-demo-init` repository:
 
-# Edit environment.sh with your actual values
-# Use your preferred editor (nano, vim, code, etc.)
-nano environment.sh
-# or
-code environment.sh
+1. Go to: `https://github.com/YOUR-ORG/bookverse-demo-init/settings/secrets/actions`
+2. Add the following secrets:
+   - `JFROG_ADMIN_TOKEN`: Your JFrog Platform admin token
+   - `GH_TOKEN`: GitHub Personal Access Token (if not using GITHUB_TOKEN)
 
-# Required variables to configure:
-#   - JFROG_URL: Your JFrog Platform URL (e.g., "https://your-instance.jfrog.io")
-#   - JFROG_ADMIN_TOKEN: JFrog Platform admin token (for key generation/upload)
-#   - EVIDENCE_KEY_ALIAS: Evidence key alias in JFrog Platform (e.g., "bookverse-signing-key")
-#
-# Optional variables:
-#   - PROJECT_KEY: JFrog project key (defaults to "bookverse")
-#   - DOCKER_REGISTRY: Docker registry hostname (auto-derived from JFROG_URL if not set)
-#   - EVIDENCE_PRIVATE_KEY: Private key for evidence signing (only if using existing keys)
-#   - GH_REPO_DISPATCH_TOKEN: GitHub PAT for cross-repo workflows (optional)
+**Step 2: Run Switch Platform Workflow**
 
-# After editing, source the environment file to export all variables
-source environment.sh
-```
+1. Go to: `https://github.com/YOUR-ORG/bookverse-demo-init/actions`
+2. Select "🔄 Switch Platform" workflow
+3. Click "Run workflow"
+4. Configure:
+   - **Setup Mode**: `initial_setup`
+   - **JFrog Platform Host**: `https://your-instance.jfrog.io`
+   - **Admin Token**: (leave empty if secret is set)
+   - **Generate Evidence Keys**: `true` (recommended)
+   - **Evidence Key Type**: `rsa` (or `ec`, `ed25519`)
+   - **Evidence Key Alias**: `bookverse-signing-key`
+   - **Update Code URLs**: `false` (for initial setup)
+5. Click "Run workflow"
 
-**Security Best Practices:**
-- ✅ Always use `environment.sh.example` as your starting template
-- ✅ Keep `environment.sh` local to your machine (it's in `.gitignore`)
-- ✅ Never share `environment.sh` in chat, email, or commit it to Git
-- ✅ Use strong, unique tokens for each environment
-- ✅ Rotate tokens regularly for production environments
+The workflow will automatically:
+- ✅ Configure `JFROG_URL`, `DOCKER_REGISTRY`, `PROJECT_KEY` variables in all repos
+- ✅ Set `JFROG_ADMIN_TOKEN` secret in all repos
+- ✅ Generate evidence keys and distribute them
+- ✅ Upload public keys to JFrog Platform
 
-**Example `environment.sh` configuration (initial setup):**
-```bash
-export JFROG_URL="https://your-instance.jfrog.io"
-export JFROG_ADMIN_TOKEN="your-jfrog-admin-token"
-export EVIDENCE_KEY_ALIAS="bookverse-signing-key"
-export PROJECT_KEY="bookverse"
-# EVIDENCE_PRIVATE_KEY is not needed initially - will be generated in Step 2
-# export GH_REPO_DISPATCH_TOKEN="ghp_xxxxxxxxxxxx..."  # Optional
-```
+**Step 3: Run Setup Platform Workflow**
 
-**Note**: `EVIDENCE_PRIVATE_KEY` is optional initially. If you're generating keys with `3_update_evidence_keys.sh`, you don't need to set it in `environment.sh` until after keys are generated.
+After Switch Platform completes, run the Setup Platform workflow to create JFrog infrastructure.
 
-#### Step 2: Generate Evidence Keys (Optional)
+**📋 Next Steps**: Continue with the [Getting Started Guide](docs/GETTING_STARTED.md) for complete setup instructions including Kubernetes deployment.
 
-If you need to generate new evidence keys, use the key generation script:
+---
 
-```bash
-# Make sure you've sourced environment.sh first
-source environment.sh
+#### Legacy Approach (Optional)
 
-# Generate new evidence keys and upload to JFrog Platform
-./scripts/3_update_evidence_keys.sh --generate --org "your-org"
-
-# After generation, save the private key shown in the output
-# You can then add it to environment.sh if needed for configure_service_secrets.sh
-```
-
-#### Step 3: Configure Repository Secrets and Variables
-
-Once your environment variables are set, use the automated configuration script to set up all service repositories:
-
-```bash
-# Make sure you've sourced environment.sh first
-source environment.sh
-
-# Run the configuration script with your GitHub organization
-.github/scripts/setup/configure_service_secrets.sh "your-org"
-```
-
-This script will automatically configure:
-- **Repository Variables**: `JFROG_URL`, `PROJECT_KEY`, `DOCKER_REGISTRY`, `EVIDENCE_KEY_ALIAS`
-- **Repository Secrets**: `EVIDENCE_PRIVATE_KEY`
-- **Optional Dispatch Token**: `GH_REPO_DISPATCH_TOKEN` (if provided, for cross-repo workflows)
-
-**📋 Next Steps**: Continue with the [Getting Started Guide](docs/GETTING_STARTED.md) for complete setup instructions.
+**Note**: The old approach using local scripts (`environment.sh`, `3_update_evidence_keys.sh`, `4_configure-service-secrets.sh`) is still available for backward compatibility, but the Switch Platform workflow is **recommended** for all new setups as it provides:
+- Better error handling and validation
+- Integrated evidence key generation
+- Code URL updates (for platform migrations)
+- Single workflow for all configuration
 
 ---
 
