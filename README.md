@@ -36,19 +36,31 @@ BookVerse implements **comprehensive unified policies** that demonstrate enterpr
 
 ---
 
-## 🚀 Initial Setup: Fork Service Repositories
+## 🚀 Initial Setup
+
+The BookVerse platform setup is streamlined using GitHub Actions workflows. Follow these steps to get started:
+
+### Overview
+
+The setup process consists of three main steps:
+1. **Fork Service Repositories** - Get your own copies of all service repositories
+2. **🔄 Switch Platform Workflow** - Configure all repositories and generate evidence keys (primary method)
+3. **🚀 Setup Platform Workflow** - Provision JFrog Platform infrastructure
+
+---
+
+### Step 1: Fork Service Repositories
 
 Before you can deploy the BookVerse platform, you need to fork the service repositories from the upstream organization to your own GitHub organization or user account.
 
-### Why Fork?
-
+**Why Fork?**
 The BookVerse demo consists of multiple service repositories that need to be under your control to:
 - Configure repository secrets and variables
 - Set up CI/CD workflows with your JFrog Platform
 - Customize settings for your environment
 - Maintain your own codebase
 
-### Quick Fork Setup
+**Quick Fork Setup:**
 
 Use the automated forking script to fork all service repositories at once:
 
@@ -82,7 +94,7 @@ gh auth login
 ./scripts/create-clean-repos.sh --target-org your-org --upstream-org yonatanp-jfrog --clone-local
 ```
 
-### What Gets Forked?
+**What Gets Forked?**
 
 The script forks these service repositories:
 - `bookverse-inventory` - Product catalog and inventory management
@@ -92,11 +104,13 @@ The script forks these service repositories:
 - `bookverse-web` - Frontend web application
 - `bookverse-helm` - Kubernetes deployment charts
 
-### After Forking
+---
 
-Once repositories are forked, use the **🔄 Switch Platform** workflow to configure everything. This is the **recommended approach** for all new setups.
+### Step 2: Configure with Switch Platform Workflow ⭐
 
-#### Step 1: Configure GitHub Repository Secrets
+**The 🔄 Switch Platform workflow is the primary method for configuring BookVerse.** It automatically configures all repositories, generates evidence keys, and sets up everything you need.
+
+**2a. Configure GitHub Repository Secrets**
 
 Before running the Switch Platform workflow, set up repository secrets in the `bookverse-demo-init` repository:
 
@@ -105,7 +119,7 @@ Before running the Switch Platform workflow, set up repository secrets in the `b
    - **`JFROG_ADMIN_TOKEN`**: Your JFrog Platform admin token (required)
    - **`GH_TOKEN`**: GitHub Personal Access Token (optional, only if not using default `GITHUB_TOKEN`)
 
-#### Step 2: Run Switch Platform Workflow (Initial Setup)
+**2b. Run Switch Platform Workflow**
 
 The Switch Platform workflow will configure all repositories and generate evidence keys automatically:
 
@@ -132,7 +146,9 @@ The Switch Platform workflow will configure all repositories and generate eviden
 - ✅ Uploads public keys to JFrog Platform
 - ✅ Validates platform connectivity and authentication
 
-#### Step 3: Run Setup Platform Workflow
+---
+
+### Step 3: Provision JFrog Platform Infrastructure
 
 After Switch Platform completes successfully, run the **🚀 Setup Platform** workflow to provision JFrog infrastructure:
 
@@ -147,19 +163,29 @@ After Switch Platform completes successfully, run the **🚀 Setup Platform** wo
 - ✅ Creates OIDC integrations for GitHub authentication
 - ✅ Sets up users and role-based access control
 
+---
+
+### ✅ Setup Complete!
+
+After both workflows complete successfully, your BookVerse platform is ready! 
+
 **📋 Next Steps**: Continue with the [Getting Started Guide](docs/GETTING_STARTED.md) for complete setup instructions including Kubernetes deployment.
 
 ---
 
-#### Alternative: Legacy Local Scripts (Deprecated)
+### Alternative: Legacy Local Scripts (Deprecated)
 
-**⚠️ Note**: The old approach using local scripts (`update_evidence_keys.sh`, `configure-service-secrets.sh`) is **deprecated** and only available for backward compatibility. The Switch Platform workflow is **strongly recommended** for all new setups because it provides:
+**⚠️ Note**: The old approach using local scripts (`update_evidence_keys.sh`, `configure-service-secrets.sh`) is **deprecated** and only available for backward compatibility. 
+
+**Why use Switch Platform workflow instead?**
 - ✅ Better error handling and validation
 - ✅ Integrated evidence key generation
 - ✅ Automated configuration across all repositories
 - ✅ Code URL updates (for platform migrations)
 - ✅ Single workflow for all configuration
 - ✅ No local environment setup required
+- ✅ Workflow-based with comprehensive logging
+- ✅ Automatic retry logic for failed operations
 
 ---
 
