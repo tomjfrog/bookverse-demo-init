@@ -16,7 +16,7 @@ During BookVerse setup, many resources are created automatically, but some are *
 
 **Status**: Must be forked/created manually  
 **Location**: Your GitHub organization  
-**Created By**: Manual forking via `2_create-clean-res.sh` or GitHub UI
+**Created By**: Manual forking via `create-clean-repos.sh` or GitHub UI
 
 **Repositories**:
 - `bookverse-inventory`
@@ -121,7 +121,7 @@ During BookVerse setup, many resources are created automatically, but some are *
 
 **Status**: Created by Switch Platform, but may persist after project deletion  
 **Location**: JFrog Platform (platform-level, not project-level)  
-**Created By**: Switch Platform workflow or `3_update_evidence_keys.sh`
+**Created By**: Switch Platform workflow or `update_evidence_keys.sh`
 
 **Action Required**:
 - Evidence keys are stored at **platform level**, not project level

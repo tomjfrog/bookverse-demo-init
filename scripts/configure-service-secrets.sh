@@ -37,7 +37,7 @@
 #     - Multi-Repository Management: Automated secret/variable configuration across service repos
 #     - Configuration Distribution: Secure propagation of JFrog Platform configuration
 #     - GitHub CLI Integration: Native GitHub CLI for secure secret and variable management
-#     - Evidence Key Separation: Evidence keys managed separately by 3_update_evidence_keys.sh
+#     - Evidence Key Separation: Evidence keys managed separately by update_evidence_keys.sh
 #     - Validation Framework: Comprehensive verification of configuration success
 #     - Error Recovery: Robust error handling with detailed failure reporting
 #     - Batch Processing: Efficient bulk repository configuration with status tracking
@@ -45,7 +45,7 @@
 # 🚀 KEY FEATURES:
 #     - Automated repository variables configuration (JFROG_URL, PROJECT_KEY, DOCKER_REGISTRY)
 #     - Optional GitHub repository dispatch token configuration for platform orchestration
-#     - Note: Evidence keys are managed separately by 3_update_evidence_keys.sh
+#     - Note: Evidence keys are managed separately by update_evidence_keys.sh
 #     - Comprehensive validation and verification of configuration success
 #     - Batch processing with individual repository status tracking and error isolation
 #     - Security-first approach with secure transmission
@@ -85,7 +85,7 @@
 #                                 - Used for Docker image push/pull operations
 #     
 #     Note: Evidence keys (EVIDENCE_KEY_ALIAS, EVIDENCE_PRIVATE_KEY, EVIDENCE_PUBLIC_KEY)
-#           are managed by 3_update_evidence_keys.sh, not this script
+#           are managed by update_evidence_keys.sh, not this script
 #     
 #     [Optional Environment Variables]
 #     GH_REPO_DISPATCH_TOKEN   : GitHub repository dispatch token for cross-repo workflows
@@ -150,19 +150,19 @@
 # 💡 EXAMPLES:
 #     [Basic Configuration]
 #     export JFROG_URL="https://your-instance.jfrog.io"
-#     ./scripts/4_configure-service-secrets.sh "your-org"
+#     ./scripts/configure-service-secrets.sh "your-org"
 #     
 #     [Configuration with Custom Project Key]
 #     export JFROG_URL="https://your-instance.jfrog.io"
 #     export PROJECT_KEY="myproject"
-#     ./scripts/4_configure-service-secrets.sh "my-org"
+#     ./scripts/configure-service-secrets.sh "my-org"
 #     
 #     [Advanced Configuration with Dispatch Token]
 #     export JFROG_URL="https://your-instance.jfrog.io"
 #     export GH_REPO_DISPATCH_TOKEN="ghp_xxxxxxxxxxxx..."
-#     ./scripts/4_configure-service-secrets.sh "your-org"
+#     ./scripts/configure-service-secrets.sh "your-org"
 #     
-#     Note: Evidence keys should be configured separately using 3_update_evidence_keys.sh
+#     Note: Evidence keys should be configured separately using update_evidence_keys.sh
 #
 # ⚠️ ERROR HANDLING:
 #     [Common Failure Modes]
@@ -198,7 +198,7 @@
 #     - JFrog Platform: OIDC authentication (no access token required)
 #     - Artifactory: Container registry access for CI/CD workflows
 #     - Build Info: CI/CD pipeline metadata and artifact management
-#     - Evidence Collection: Managed separately by 3_update_evidence_keys.sh
+#     - Evidence Collection: Managed separately by update_evidence_keys.sh
 #
 # 📊 PERFORMANCE:
 #     [Execution Time]
@@ -262,7 +262,7 @@ if [ ${#MISSING_VARS[@]} -gt 0 ]; then
     echo "                          - Used for OIDC authentication and artifact management"
     echo ""
     echo "  Note: Evidence keys (EVIDENCE_KEY_ALIAS, EVIDENCE_PRIVATE_KEY, EVIDENCE_PUBLIC_KEY)"
-    echo "        are managed by 3_update_evidence_keys.sh, not this script"
+    echo "        are managed by update_evidence_keys.sh, not this script"
     echo ""
     echo "🌍 Optional Environment Variables:"
     echo "  PROJECT_KEY          : JFrog project key (default: 'bookverse')"
@@ -287,17 +287,17 @@ if [ ${#MISSING_VARS[@]} -gt 0 ]; then
     echo "💡 Example Usage:"
     echo "  # Basic configuration"
     echo "  export JFROG_URL='https://your-instance.jfrog.io'"
-    echo "  ./scripts/4_configure-service-secrets.sh 'your-org'"
+    echo "  ./scripts/configure-service-secrets.sh 'your-org'"
     echo ""
     echo "  # Configuration with custom project key"
     echo "  export JFROG_URL='https://your-instance.jfrog.io'"
     echo "  export PROJECT_KEY='myproject'"
-    echo "  ./scripts/4_configure-service-secrets.sh 'my-org'"
+    echo "  ./scripts/configure-service-secrets.sh 'my-org'"
     echo ""
     echo "  # Advanced configuration with dispatch token"
     echo "  export JFROG_URL='https://your-instance.jfrog.io'"
     echo "  export GH_REPO_DISPATCH_TOKEN='ghp_xxxxxxxxxxxx...'"
-    echo "  ./scripts/4_configure-service-secrets.sh 'your-org'"
+    echo "  ./scripts/configure-service-secrets.sh 'your-org'"
     echo ""
     echo "📋 Prerequisites:"
     echo "  - GitHub CLI installed and authenticated (gh auth login)"
@@ -325,7 +325,7 @@ echo "🔧 JFrog URL: $JFROG_URL"
 echo "🔧 Project Key: $PROJECT_KEY"
 echo "🔧 Docker Registry: $DOCKER_REGISTRY"
 echo ""
-echo "ℹ️  Note: Evidence keys are managed separately by 3_update_evidence_keys.sh"
+echo "ℹ️  Note: Evidence keys are managed separately by update_evidence_keys.sh"
 echo ""
 
 # 📦 Repository Configuration: Define target repositories for configuration
@@ -436,7 +436,7 @@ for repo_name in "${SERVICE_REPOS[@]}"; do
         echo "      - Variables: ✅ JFROG_URL, PROJECT_KEY, DOCKER_REGISTRY"
         echo "      - CI/CD Authentication: ✅ Enabled (OIDC)"
         echo "      - Container Registry Access: ✅ Ready"
-        echo "      - Evidence Keys: ℹ️  Managed by 3_update_evidence_keys.sh"
+        echo "      - Evidence Keys: ℹ️  Managed by update_evidence_keys.sh"
         ((SUCCESS_COUNT++))
     fi
 done
@@ -490,7 +490,7 @@ echo "💡 Troubleshooting:"
 echo "  - If workflows fail: Check variable values and secret permissions"
 echo "  - For authentication errors: Verify OIDC provider is configured in JFrog Platform"
 echo "  - For repository access: Confirm variables are set correctly"
-echo "  - For evidence signing: Use 3_update_evidence_keys.sh to configure evidence keys"
+echo "  - For evidence signing: Use update_evidence_keys.sh to configure evidence keys"
 
 # 🚨 Exit with appropriate code based on overall success
 if [ "$OVERALL_SUCCESS" = false ]; then

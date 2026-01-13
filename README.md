@@ -94,70 +94,72 @@ The script forks these service repositories:
 
 ### After Forking
 
-Once repositories are forked, the next steps are:
+Once repositories are forked, use the **🔄 Switch Platform** workflow to configure everything. This is the **recommended approach** for all new setups.
 
-1. **🔄 Switch Platform** (Main Entry Point): Use the "🔄 Switch Platform" GitHub Actions workflow to:
-   - Configure all repository variables and secrets across all service repos
-   - Generate and distribute evidence keys automatically
-   - Set up JFrog Platform configuration
-   - This is the **recommended approach** for new setups
+#### Step 1: Configure GitHub Repository Secrets
 
-2. **🚀 Setup Platform**: Execute the Setup Platform workflow to provision JFrog infrastructure:
-   - Create the `bookverse` project in JFrog Platform
-   - Set up artifact repositories (Docker, PyPI, npm, etc.)
-   - Configure AppTrust applications with lifecycle stages
-   - Create OIDC integrations for GitHub authentication
-   - Set up users and role-based access control
+Before running the Switch Platform workflow, set up repository secrets in the `bookverse-demo-init` repository:
 
-**📋 Complete Setup Instructions**: See the [Getting Started Guide](docs/GETTING_STARTED.md) for detailed step-by-step instructions.
-
-#### Quick Setup Overview
-
-**Step 1: Configure GitHub Repository Secrets** (in `bookverse-demo-init` repository)
-
-Before running the Switch Platform workflow, you need to set up repository secrets in the `bookverse-demo-init` repository:
-
-1. Go to: `https://github.com/YOUR-ORG/bookverse-demo-init/settings/secrets/actions`
+1. Navigate to: `https://github.com/YOUR-ORG/bookverse-demo-init/settings/secrets/actions`
 2. Add the following secrets:
-   - `JFROG_ADMIN_TOKEN`: Your JFrog Platform admin token
-   - `GH_TOKEN`: GitHub Personal Access Token (if not using GITHUB_TOKEN)
+   - **`JFROG_ADMIN_TOKEN`**: Your JFrog Platform admin token (required)
+   - **`GH_TOKEN`**: GitHub Personal Access Token (optional, only if not using default `GITHUB_TOKEN`)
 
-**Step 2: Run Switch Platform Workflow**
+#### Step 2: Run Switch Platform Workflow (Initial Setup)
 
-1. Go to: `https://github.com/YOUR-ORG/bookverse-demo-init/actions`
-2. Select "🔄 Switch Platform" workflow
-3. Click "Run workflow"
-4. Configure:
-   - **Setup Mode**: `initial_setup`
+The Switch Platform workflow will configure all repositories and generate evidence keys automatically:
+
+1. Navigate to: `https://github.com/YOUR-ORG/bookverse-demo-init/actions`
+2. Select **"🔄 Switch Platform"** workflow
+3. Click **"Run workflow"**
+4. Configure the workflow inputs:
+   - **Setup Mode**: `initial_setup` ⭐ (for first-time setup)
    - **JFrog Platform Host**: `https://your-instance.jfrog.io`
-   - **Admin Token**: (leave empty if secret is set)
-   - **Generate Evidence Keys**: `true` (recommended)
+   - **Admin Token**: (leave empty - uses `JFROG_ADMIN_TOKEN` secret)
+   - **Generate Evidence Keys**: `true` ✅ (recommended for initial setup)
    - **Evidence Key Type**: `rsa` (or `ec`, `ed25519`)
    - **Evidence Key Alias**: `bookverse-signing-key`
-   - **Update Code URLs**: `false` (for initial setup)
-5. Click "Run workflow"
+   - **Update Code URLs**: `false` (skip for initial setup)
+   - **Update K8s**: `false` (unless you have Kubernetes configured)
+5. Click **"Run workflow"**
 
-The workflow will automatically:
-- ✅ Configure `JFROG_URL`, `DOCKER_REGISTRY`, `PROJECT_KEY` variables in all repos
-- ✅ Set `JFROG_ADMIN_TOKEN` secret in all repos
-- ✅ Generate evidence keys and distribute them
-- ✅ Upload public keys to JFrog Platform
+**What the Switch Platform workflow does:**
+- ✅ Configures `JFROG_URL`, `DOCKER_REGISTRY`, `PROJECT_KEY` variables in all service repos
+- ✅ Sets `JFROG_ADMIN_TOKEN` secret in all service repos
+- ✅ Generates evidence keys (RSA/EC/ED25519) automatically
+- ✅ Distributes `EVIDENCE_PRIVATE_KEY` secret to all repos
+- ✅ Sets `EVIDENCE_PUBLIC_KEY` and `EVIDENCE_KEY_ALIAS` variables in all repos
+- ✅ Uploads public keys to JFrog Platform
+- ✅ Validates platform connectivity and authentication
 
-**Step 3: Run Setup Platform Workflow**
+#### Step 3: Run Setup Platform Workflow
 
-After Switch Platform completes, run the Setup Platform workflow to create JFrog infrastructure.
+After Switch Platform completes successfully, run the **🚀 Setup Platform** workflow to provision JFrog infrastructure:
+
+1. Navigate to: `https://github.com/YOUR-ORG/bookverse-demo-init/actions`
+2. Select **"🚀 Setup Platform"** workflow
+3. Click **"Run workflow"** (no inputs required)
+
+**What the Setup Platform workflow does:**
+- ✅ Creates the `bookverse` project in JFrog Platform
+- ✅ Sets up artifact repositories (Docker, PyPI, npm, etc.)
+- ✅ Configures AppTrust applications with lifecycle stages (DEV, QA, STAGING, PROD)
+- ✅ Creates OIDC integrations for GitHub authentication
+- ✅ Sets up users and role-based access control
 
 **📋 Next Steps**: Continue with the [Getting Started Guide](docs/GETTING_STARTED.md) for complete setup instructions including Kubernetes deployment.
 
 ---
 
-#### Legacy Approach (Optional)
+#### Alternative: Legacy Local Scripts (Deprecated)
 
-**Note**: The old approach using local scripts (`environment.sh`, `3_update_evidence_keys.sh`, `4_configure-service-secrets.sh`) is still available for backward compatibility, but the Switch Platform workflow is **recommended** for all new setups as it provides:
-- Better error handling and validation
-- Integrated evidence key generation
-- Code URL updates (for platform migrations)
-- Single workflow for all configuration
+**⚠️ Note**: The old approach using local scripts (`update_evidence_keys.sh`, `configure-service-secrets.sh`) is **deprecated** and only available for backward compatibility. The Switch Platform workflow is **strongly recommended** for all new setups because it provides:
+- ✅ Better error handling and validation
+- ✅ Integrated evidence key generation
+- ✅ Automated configuration across all repositories
+- ✅ Code URL updates (for platform migrations)
+- ✅ Single workflow for all configuration
+- ✅ No local environment setup required
 
 ---
 

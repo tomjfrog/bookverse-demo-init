@@ -27,9 +27,9 @@ This guide outlines the AppTrust features available in BookVerse and provides re
   - **PROD Release Gates** (3 policies): DEV/QA/STAGING Completion (all BLOCKING)
 
 ### Automation Scripts (Complete)
-- ✅ **Repository Forking**: `2_create-clean-repos.sh`
-- ✅ **Evidence Key Management**: `3_update_evidence_keys.sh`
-- ✅ **Secrets Configuration**: `4_configure-service-secrets.sh`
+- ✅ **Repository Forking**: `create-clean-repos.sh`
+- ✅ **Evidence Key Management**: `update_evidence_keys.sh`
+- ✅ **Secrets Configuration**: `configure-service-secrets.sh`
 - ✅ **Platform Setup**: GitHub Actions workflow `🚀-setup-platform.yml`
 
 ---

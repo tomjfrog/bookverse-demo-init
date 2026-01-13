@@ -21,7 +21,7 @@
 export JFROG_URL="https://your-instance.jfrog.io"
 
 # JFrog Platform admin token (required for key generation and upload)
-# Required for 3_update_evidence_keys.sh to upload keys to JFrog Platform
+# Required for update_evidence_keys.sh to upload keys to JFrog Platform
 # Get this from your JFrog Platform admin account
 # Format: JFrog access token
 export JFROG_ADMIN_TOKEN="your-jfrog-admin-token"
@@ -33,8 +33,8 @@ export EVIDENCE_KEY_ALIAS="bookverse-signing-key"
 
 # Evidence signing private key (PEM format) - OPTIONAL
 # This is only needed if you're providing existing keys to configure_service_secrets.sh
-# If you're using 3_update_evidence_keys.sh to generate keys, leave this unset initially
-# After generating keys with 3_update_evidence_keys.sh, you can set this to the generated key
+# If you're using update_evidence_keys.sh to generate keys, leave this unset initially
+# After generating keys with update_evidence_keys.sh, you can set this to the generated key
 # You can either:
 #   1. Set it directly: export EVIDENCE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----..."
 #   2. Read from file: export EVIDENCE_PRIVATE_KEY="$(cat path/to/evidence-key.pem)"

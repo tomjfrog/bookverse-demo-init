@@ -70,7 +70,7 @@ BOOKVERSE_REPOS=(
 
 ## 🚀 Newer Bootstrap Scripts
 
-### Script 1: `2_create-clean-repos.sh`
+### Script 1: `create-clean-repos.sh`
 
 **Purpose**: Fork repositories from upstream to target organization
 
@@ -83,7 +83,7 @@ BOOKVERSE_REPOS=(
 
 ---
 
-### Script 2: `3_update_evidence_keys.sh`
+### Script 2: `update_evidence_keys.sh`
 
 **Purpose**: Generate and distribute cryptographic evidence keys
 
@@ -98,7 +98,7 @@ BOOKVERSE_REPOS=(
 
 ---
 
-### Script 3: `4_configure-service-secrets.sh`
+### Script 3: `configure-service-secrets.sh`
 
 **Purpose**: Configure GitHub repository secrets and variables
 
@@ -111,7 +111,7 @@ BOOKVERSE_REPOS=(
 **Overlap with Switch Platform**: ✅ **Significant Overlap** - Both update the same variables!
 
 **Key Differences**:
-| Feature | Switch Platform | `4_configure-service-secrets.sh` |
+| Feature | Switch Platform | `configure-service-secrets.sh` |
 |---------|----------------|----------------------------------|
 | **JFROG_ADMIN_TOKEN** | ✅ Updates secret | ❌ Does not update |
 | **Code Updates** | ✅ Updates hardcoded URLs | ❌ Does not update code |
@@ -121,7 +121,7 @@ BOOKVERSE_REPOS=(
 
 ---
 
-### Script 4: `1_apply-environment-values.sh`
+### Script 4: `apply-environment-values.sh`
 
 **Purpose**: Apply environment values (appears to be a wrapper/helper)
 
@@ -133,16 +133,16 @@ BOOKVERSE_REPOS=(
 
 | Functionality | Switch Platform | Bootstrap Scripts | Overlap? |
 |--------------|-----------------|-------------------|----------|
-| **Update JFROG_URL** | ✅ | ✅ (`4_configure-service-secrets.sh`) | ✅ **YES** |
-| **Update DOCKER_REGISTRY** | ✅ | ✅ (`4_configure-service-secrets.sh`) | ✅ **YES** |
+| **Update JFROG_URL** | ✅ | ✅ (`configure-service-secrets.sh`) | ✅ **YES** |
+| **Update DOCKER_REGISTRY** | ✅ | ✅ (`configure-service-secrets.sh`) | ✅ **YES** |
 | **Update JFROG_ADMIN_TOKEN** | ✅ | ❌ | ❌ No |
-| **Update EVIDENCE_* vars** | ✅ (if present) | ✅ (`3_update_evidence_keys.sh`) | ⚠️ **Partial** |
+| **Update EVIDENCE_* vars** | ✅ (if present) | ✅ (`update_evidence_keys.sh`) | ⚠️ **Partial** |
 | **Update hardcoded URLs in code** | ✅ | ❌ | ❌ No |
 | **Create PRs for code changes** | ✅ | ❌ | ❌ No |
 | **Platform validation** | ✅ | ⚠️ Limited | ⚠️ **Partial** |
 | **Retry logic** | ✅ | ⚠️ Limited | ⚠️ **Partial** |
-| **Generate evidence keys** | ❌ | ✅ (`3_update_evidence_keys.sh`) | ❌ No |
-| **Fork repositories** | ❌ | ✅ (`2_create-clean-repos.sh`) | ❌ No |
+| **Generate evidence keys** | ❌ | ✅ (`update_evidence_keys.sh`) | ❌ No |
+| **Fork repositories** | ❌ | ✅ (`create-clean-repos.sh`) | ❌ No |
 
 ---
 
@@ -182,14 +182,14 @@ BOOKVERSE_REPOS=(
    - Add option to generate evidence keys if not present
 
 2. **Add Evidence Key Generation**
-   - Integrate `3_update_evidence_keys.sh` logic into Switch Platform
+   - Integrate `update_evidence_keys.sh` logic into Switch Platform
    - Generate keys if `EVIDENCE_KEY_ALIAS` is not set
    - Upload to JFrog and distribute to repos
 
 3. **Make Bootstrap Scripts Thin Wrappers**
-   - `4_configure-service-secrets.sh` → Calls Switch Platform workflow via API
-   - `3_update_evidence_keys.sh` → Calls Switch Platform with evidence key generation flag
-   - Keep `2_create-clean-repos.sh` separate (different purpose)
+   - `configure-service-secrets.sh` → Calls Switch Platform workflow via API
+   - `update_evidence_keys.sh` → Calls Switch Platform with evidence key generation flag
+   - Keep `create-clean-repos.sh` separate (different purpose)
 
 4. **Add Repository Forking Option**
    - Optional step in Switch Platform to fork repos if they don't exist
@@ -233,12 +233,12 @@ BOOKVERSE_REPOS=(
 ### Phase 1: Immediate (Low Risk)
 1. ✅ **Document current state** (this document)
 2. ✅ **Add Switch Platform to initial setup docs** as alternative
-3. ✅ **Update `4_configure-service-secrets.sh`** to mention Switch Platform alternative
+3. ✅ **Update `configure-service-secrets.sh`** to mention Switch Platform alternative
 
 ### Phase 2: Short Term (Medium Risk)
 1. **Enhance Switch Platform** with initial setup detection
 2. **Add evidence key generation** to Switch Platform
-3. **Add JFROG_ADMIN_TOKEN update** to `4_configure-service-secrets.sh` (or deprecate in favor of Switch Platform)
+3. **Add JFROG_ADMIN_TOKEN update** to `configure-service-secrets.sh` (or deprecate in favor of Switch Platform)
 
 ### Phase 3: Long Term (Higher Risk)
 1. **Consolidate into single workflow** (Switch Platform)
