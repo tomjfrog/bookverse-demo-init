@@ -105,7 +105,7 @@ jobs:
           export EVIDENCE_KEY_TYPE='${{ github.event.inputs.evidence_key_type }}'
           export EVIDENCE_KEY_ALIAS='${{ github.event.inputs.evidence_key_alias }}'
           export UPDATE_CODE_URLS='${{ github.event.inputs.update_code_urls }}'
-          export FROG_CLI_AVOID_NEW_VERSION_WARNING=true
+          export JFROG_CLI_AVOID_NEW_VERSION_WARNING=true
           
           if [[ -n "${{ github.event.inputs.admin_token }}" ]]; then
             export NEW_JFROG_ADMIN_TOKEN='${{ github.event.inputs.admin_token }}'
