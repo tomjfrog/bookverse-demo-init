@@ -443,10 +443,11 @@ generate_evidence_keys() {
     if [[ "$GENERATE_EVIDENCE_KEYS" != "true" ]]; then
         return 0
     fi
-    
+    export JFROG_CLI_AVOID_NEW_VERSION_WARNING=true
     log_info "Generating evidence keys..."
     log_info "  Key type: $EVIDENCE_KEY_TYPE"
     log_info "  Key alias: $EVIDENCE_KEY_ALIAS"
+    log_info "  Skip CLI Version Check: $JFROG_CLI_AVOID_NEW_VERSION_WARNING"
     
     if ! command -v jf &> /dev/null; then
         log_error "JFrog CLI (jf) is required for key generation but not installed"
@@ -460,7 +461,7 @@ generate_evidence_keys() {
     trap "rm -rf '$temp_dir'" EXIT
     
     log_info "  → Generating $EVIDENCE_KEY_TYPE key pair..."
-    if ! jf evd generate-key-pair --key-alias "$EVIDENCE_KEY_ALIAS" --key-file-path "$temp_dir" 2>&1; then
+    if ! jf evd generate-key-pair --key-alias "$EVIDENCE_KEY_ALIAS" --key-file-path "$temp_dir" --platform-url "$NEW_JFROG_URL" 2>&1; then
         log_warning "  ⚠️  Failed to generate keys with JFrog CLI, trying alternative method..."
         # Fallback to OpenSSL if JFrog CLI fails
         if ! command -v openssl &> /dev/null; then
