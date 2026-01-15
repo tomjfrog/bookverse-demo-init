@@ -461,7 +461,7 @@ generate_evidence_keys() {
     trap "rm -rf '$temp_dir'" EXIT
     
     log_info "  → Generating $EVIDENCE_KEY_TYPE key pair..."
-    if ! jf evd generate-key-pair --key-alias "$EVIDENCE_KEY_ALIAS" --key-file-path "$temp_dir" --url "$NEW_JFROG_URL" --access-token "$NEW_JFROG_ADMIN_TOKEN" 2>&1; then
+    if ! jf evd generate-key-pair --key-alias "$EVIDENCE_KEY_ALIAS" --key-file-name "$EVIDENCE_KEY_ALIAS" --key-file-path "$temp_dir" --url "$NEW_JFROG_URL" --access-token "$NEW_JFROG_ADMIN_TOKEN" 2>&1; then
         log_warning "  ⚠️  Failed to generate keys with JFrog CLI, trying alternative method..."
         # Fallback to OpenSSL if JFrog CLI fails
         if ! command -v openssl &> /dev/null; then
@@ -488,7 +488,7 @@ generate_evidence_keys() {
                 ;;
         esac
     else
-        # JFrog CLI generates keys with specific naming
+        # JFrog CLI uses the provided base name for output files
         if [[ -f "$temp_dir/${EVIDENCE_KEY_ALIAS}.key" ]] && [[ -f "$temp_dir/${EVIDENCE_KEY_ALIAS}.pub" ]]; then
             mv "$temp_dir/${EVIDENCE_KEY_ALIAS}.key" "$temp_dir/private.pem" 2>/dev/null || true
             mv "$temp_dir/${EVIDENCE_KEY_ALIAS}.pub" "$temp_dir/public.pem" 2>/dev/null || true
