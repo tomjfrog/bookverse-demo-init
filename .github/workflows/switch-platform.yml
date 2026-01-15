@@ -68,12 +68,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
         
       - name: Setup JFrog CLI
-        uses: EyalDelarea/setup-jfrog-cli@swampUpAppTrust
-        with:
-          version: latest
+        uses: jfrog/setup-jfrog-cli@v4
           
       - name: Validate Confirmation
         run: |

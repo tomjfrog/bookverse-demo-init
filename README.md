@@ -117,7 +117,24 @@ Before running the Switch Platform workflow, set up repository secrets in the `b
 1. Navigate to: `https://github.com/YOUR-ORG/bookverse-demo-init/settings/secrets/actions`
 2. Add the following secrets:
    - **`JFROG_ADMIN_TOKEN`**: Your JFrog Platform admin token (required)
-   - **`GH_TOKEN`**: GitHub Personal Access Token (optional, only if not using default `GITHUB_TOKEN`)
+   - **`GH_TOKEN`**: GitHub Personal Access Token (optional - see note below)
+
+**About GitHub Tokens:**
+
+- **`GITHUB_TOKEN`**: Automatically provided by GitHub Actions for each workflow run. It has permissions to the repository where the workflow runs. The Switch Platform workflow uses this by default if `GH_TOKEN` is not set.
+  
+- **`GH_TOKEN`**: Used by the GitHub CLI (`gh`) for authentication. If you need broader permissions (e.g., to update variables/secrets across multiple repositories in your organization), you can create a Personal Access Token (PAT) with `repo`, `workflow`, and `admin:repo_hook` scopes and set it as the `GH_TOKEN` secret.
+
+**When to set `GH_TOKEN`:**
+- ✅ **Required** if the workflow needs to update repositories outside the current repository
+- ✅ **Required** if you need organization-level permissions
+- ✅ **Optional** if all operations are within the same repository (uses `GITHUB_TOKEN` by default)
+
+**How to create a GitHub PAT for `GH_TOKEN`:**
+1. Go to: `https://github.com/settings/tokens`
+2. Click "Generate new token" → "Generate new token (classic)"
+3. Set expiration and select scopes: `repo`, `workflow`, `admin:repo_hook`
+4. Copy the token and add it as the `GH_TOKEN` secret in your repository
 
 **2b. Run Switch Platform Workflow**
 
