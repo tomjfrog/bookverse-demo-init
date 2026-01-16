@@ -103,7 +103,7 @@ jobs:
       - name: Setup JFrog CLI
         uses: jfrog/setup-jfrog-cli@v4
         with:
-          version: latest
+          version: 2.88.0
 
       # ✅ Configuration Validation: Verify required environment variables are configured
       - name: "Preflight: require JFROG_URL"

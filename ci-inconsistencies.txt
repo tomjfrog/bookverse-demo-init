@@ -1,0 +1,11 @@
+BookVerse CI inconsistencies vs bookverse-inventory (pending)
+
+- Coverage output parity: bookverse-web and bookverse-helm lack a test-coverage step,
+  so they cannot emit coverage_percent like inventory.
+- Evidence steps: bookverse-helm disables chart evidence and build evidence.
+- JFrog CLI version pinning in create-promote jobs: inventory pins
+  jfrog/setup-jfrog-cli@v4 with version 2.88.0; other services may not.
+- bookverse-infra checkout source: workflows reference both yonatanp-jfrog and
+  tomjfrog for bookverse-infra; not standardized.
+- Build info repo naming: some services set BUILD_INFO_REPO explicitly, others
+  rely on defaults.
