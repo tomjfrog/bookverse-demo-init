@@ -86,7 +86,7 @@ env:
   JFROG_URL: ${{ vars.JFROG_URL }}                    # JFrog Platform URL (repository variable)
   JFROG_ADMIN_TOKEN: ${{ secrets.JFROG_ADMIN_TOKEN }} # JFrog admin token (secret)
   GH_TOKEN: ${{ secrets.GH_TOKEN }}                   # GitHub token for repository management (secret)
-  GH_REPOSITORY_OWNER: ${{ vars.GH_REPOSITORY_OWNER }} # GitHub repository owner/organization (repository variable, required)
+  GH_REPOSITORY_OWNER: ${{ vars.GH_REPOSITORY_OWNER || github.repository_owner }} # GitHub repository owner/organization
 
 jobs:
   setup-platform:
@@ -111,15 +111,6 @@ jobs:
           # Validate that essential JFrog Platform URL is configured
           if [[ -z "${{ env.JFROG_URL }}" ]]; then
             echo "❌ Missing vars.JFROG_URL. Set repository variable JFROG_URL before running." >&2
-            exit 1
-          fi
-          # This prevents workflow execution with incomplete configuration
-
-      - name: "Preflight: require GH_REPOSITORY_OWNER"
-        run: |
-          # Validate that GitHub repository owner/organization is configured
-          if [[ -z "${{ env.GH_REPOSITORY_OWNER }}" ]]; then
-            echo "❌ Missing vars.GH_REPOSITORY_OWNER. Set repository variable GH_REPOSITORY_OWNER before running." >&2
             exit 1
           fi
           # This prevents workflow execution with incomplete configuration
@@ -208,12 +199,6 @@ jobs:
         run: |
           # Establish OIDC trust relationships between GitHub Actions and JFrog Platform
           ./.github/scripts/setup/create_oidc.sh
-
-      # 🔑 Cryptographic Evidence: Setup evidence keys for compliance and audit trails
-      - name: Setup Evidence Keys
-        run: |
-          # Configure cryptographic evidence collection for supply chain security
-          bash ./.github/scripts/setup/evidence_keys_setup.sh
 
       # ✅ Comprehensive Validation: Verify complete platform setup and operational readiness
       - name: Validate Complete Setup
@@ -371,11 +356,7 @@ jobs:
             fi
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "**Evidence Keys:**" >> $GITHUB_STEP_SUMMARY
-            echo "- Smart conflict resolution implemented" >> $GITHUB_STEP_SUMMARY
-            echo "- Keys distributed to all service repositories" >> $GITHUB_STEP_SUMMARY
-            echo "- Public key uploaded to JFrog Platform as trusted key" >> $GITHUB_STEP_SUMMARY
-            key_alias=${EVIDENCE_KEY_ALIAS:-bookverse-evidence-key}
-            echo "- Key alias: \`$key_alias\`" >> $GITHUB_STEP_SUMMARY
+            echo "- Managed by the Switch Platform workflow during initial setup" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "1. 🏗️ **Run service CI/CD workflows** to build and deploy applications" >> $GITHUB_STEP_SUMMARY
             echo "2. 🧪 **Test the demo applications** using the provided endpoints" >> $GITHUB_STEP_SUMMARY
