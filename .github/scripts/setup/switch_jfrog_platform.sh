@@ -73,6 +73,7 @@ BOOKVERSE_REPOS=(
     "bookverse-platform"
     "bookverse-web"
     "bookverse-helm"
+    "bookverse-infra"
     "bookverse-demo-assets"
     "bookverse-demo-init"
 )
