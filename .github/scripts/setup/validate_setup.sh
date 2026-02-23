@@ -318,7 +318,7 @@ fi
 echo ""
 
 echo "Test 2: Repository access validation"
-test_repo="${PROJECT_KEY}-inventory-internal-python-nonprod-local"
+test_repo="${PROJECT_KEY}-inventory-internal-python-DEV-local"
 repo_exists=$(curl -s --header "Authorization: Bearer ${JFROG_ADMIN_TOKEN}" \
     "${JFROG_URL}/artifactory/api/repositories/${test_repo}" | jq -r '.key' 2>/dev/null)
 if [[ "$repo_exists" == "$test_repo" ]]; then

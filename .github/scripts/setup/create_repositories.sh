@@ -163,27 +163,21 @@ get_visibility_for_service() {
 create_repository() {
     local service="$1"
     local package_type="$2"
-    local repo_type="$3"
+    local stage="$3"
     
     local visibility
     visibility=$(get_visibility_for_service "$service")
-    local stage_group
-    if [[ "$repo_type" == "internal" ]]; then
-        stage_group="nonprod"
-    else
-        stage_group="release"
-    fi
-    local repo_key="${PROJECT_KEY}-${service}-${visibility}-${package_type}-${stage_group}-local"
+    local repo_key="${PROJECT_KEY}-${service}-${visibility}-${package_type}-${stage}-local"
     
-    if [[ "$repo_type" == "internal" ]]; then
-        local environments="\"${PROJECT_KEY}-DEV\", \"${PROJECT_KEY}-QA\", \"${PROJECT_KEY}-STAGING\""
+    if [[ "$stage" == "release" ]]; then
+        local environments='["PROD"]'
         local repo_config=$(jq -n \
             --arg key "$repo_key" \
             --arg rclass "local" \
             --arg packageType "$package_type" \
-            --arg description "Repository for $service $package_type packages ($repo_type)" \
+            --arg description "Repository for $service $package_type packages (release)" \
             --arg projectKey "$PROJECT_KEY" \
-            --argjson environments "[$environments]" \
+            --argjson environments "$environments" \
             '{
                 "key": $key,
                 "rclass": $rclass,
@@ -193,12 +187,13 @@ create_repository() {
                 "environments": $environments
             }')
     else
-        local environments='["PROD"]'
+        local stage_env="${PROJECT_KEY}-${stage}"
+        local environments="[\"${stage_env}\"]"
         local repo_config=$(jq -n \
             --arg key "$repo_key" \
             --arg rclass "local" \
             --arg packageType "$package_type" \
-            --arg description "Repository for $service $package_type packages ($repo_type)" \
+            --arg description "Repository for $service $package_type packages ($stage)" \
             --arg projectKey "$PROJECT_KEY" \
             --argjson environments "$environments" \
             '{
@@ -259,10 +254,10 @@ create_repository() {
     rm -f "$temp_response"
 
     local expected_envs_json
-    if [[ "$repo_type" == "internal" ]]; then
-        expected_envs_json=$(jq -nc --arg p "$PROJECT_KEY" '[($p+"-DEV"), ($p+"-QA"), ($p+"-STAGING")]')
-    else
+    if [[ "$stage" == "release" ]]; then
         expected_envs_json='["PROD"]'
+    else
+        expected_envs_json=$(jq -nc --arg p "$PROJECT_KEY" --arg s "$stage" '[($p+"-"+$s)]')
     fi
 
     local get_resp_file=$(mktemp)
@@ -342,8 +337,9 @@ for service in "${SERVICES[@]}"; do
     echo "Processing service: $service (creating: $package_types)"
 
     for package_type in $package_types; do
-        create_repository "$service" "$package_type" "internal"
-        
+        for stage in "${NON_PROD_STAGES[@]}"; do
+            create_repository "$service" "$package_type" "$stage"
+        done
         create_repository "$service" "$package_type" "release"
     done
     
@@ -364,11 +360,12 @@ prune_old_repositories() {
         package_types="$(get_packages_for_service "$service")"
         visibility="$(get_visibility_for_service "$service")"
         for package_type in $package_types; do
-            for repo_type in internal release; do
-                if [[ "$repo_type" == "internal" ]]; then stage_group="nonprod"; else stage_group="release"; fi
-                key="${PROJECT_KEY}-${service}-${visibility}-${package_type}-${stage_group}-local"
+            for stage in "${NON_PROD_STAGES[@]}"; do
+                key="${PROJECT_KEY}-${service}-${visibility}-${package_type}-${stage}-local"
                 echo "$key" >> "$expected_file"
             done
+            key="${PROJECT_KEY}-${service}-${visibility}-${package_type}-release-local"
+            echo "$key" >> "$expected_file"
         done
     done
 
