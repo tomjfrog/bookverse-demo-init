@@ -167,7 +167,10 @@ create_repository() {
     
     local visibility
     visibility=$(get_visibility_for_service "$service")
-    local repo_key="${PROJECT_KEY}-${service}-${visibility}-${package_type}-${stage}-local"
+    # Use lowercase stage in repo key for Docker compatibility (Docker requires lowercase in image paths)
+    local stage_lower
+    stage_lower=$(echo "$stage" | tr '[:upper:]' '[:lower:]')
+    local repo_key="${PROJECT_KEY}-${service}-${visibility}-${package_type}-${stage_lower}-local"
     
     if [[ "$stage" == "release" ]]; then
         local environments='["PROD"]'
@@ -361,7 +364,8 @@ prune_old_repositories() {
         visibility="$(get_visibility_for_service "$service")"
         for package_type in $package_types; do
             for stage in "${NON_PROD_STAGES[@]}"; do
-                key="${PROJECT_KEY}-${service}-${visibility}-${package_type}-${stage}-local"
+                stage_lower=$(echo "$stage" | tr '[:upper:]' '[:lower:]')
+                key="${PROJECT_KEY}-${service}-${visibility}-${package_type}-${stage_lower}-local"
                 echo "$key" >> "$expected_file"
             done
             key="${PROJECT_KEY}-${service}-${visibility}-${package_type}-release-local"
